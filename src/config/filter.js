@@ -178,4 +178,47 @@ export const masterFilterColumns = [
   'Keluhan Kesehatan Kronis_Menahun',
 ];
 
+export const keluargaColumnsAliases = {
+  kecamatan: 'Kecamatan',
+  desa_kelurahan: 'Desa/Kelurahan',
+  jumlah_keluarga_dalam_satu_rumah: 'Jumlah Keluarga dalam Satu Rumah',
+  status_kepemilikan_rumah: 'Status Kepemilikan Rumah',
+  luas_lantai_bangunan_tempat_tinggal_m2: 'Luas Lantai Bangunan Tempat Tinggal (m2)',
+  jenis_lantai_terluas: 'Jenis Lantai Terluas',
+  jenis_dinding_terluas: 'Jenis Dinding Terluas',
+  jenis_atap_terluas: 'Jenis Atap Terluas',
+  sumber_air_minum_utama: 'Sumber Air Minum Utama',
+  sumber_penerangan_utama: 'Sumber Penerangan Utama',
+  daya_terpasang: 'Daya Terpasang',
+  bahan_bakar_memasak: 'Bahan Bakar Memasak',
+  kepemilikan_dan_penggunaan_fasilitas_bab: 'Kepemilikan dan Penggunaan Fasilitas BAB',
+  jenis_kloset: 'Jenis Kloset',
+  tempat_pembuangan_akhir_tinja: 'Tempat Pembuangan Akhir Tinja',
+  jumlah_kepemilikan_aset_tabung_gas_5_5_kg_atau_lebih: 'Jumlah Kepemilikan Aset Tabung Gas 5.5 kg atau Lebih',
+  jumlah_kepemilikan_aset_lemari_es_kulkas: 'Jumlah Kepemilikan Aset Lemari Es/Kulkas',
+  jumlah_kepemilikan_aset_air_conditioner_ac: 'Jumlah Kepemilikan Aset Air Conditioner (AC)',
+  jumlah_kepemilikan_aset_pemanas_air_untuk_mandi: 'Jumlah Kepemilikan Aset Pemanas Air untuk Mandi',
+  jumlah_kepemilikan_aset_telepon_rumah_ptsn: 'Jumlah Kepemilikan Aset Telepon Rumah (PSTN)',
+  jumlah_kepemilikan_aset_televisi_layar_datar: 'Jumlah Kepemilikan Aset Televisi Layar Datar',
+  jumlah_kepemilikan_aset_emas_perhiasan_gram: 'Jumlah Kepemilikan Aset Emas/Perhiasan (gram)',
+  jumlah_kepemilikan_aset_komputer_laptop_tablet: 'Jumlah Kepemilikan Aset Komputer/Laptop/Tablet',
+  jumlah_kepemilikan_aset_sepeda_motor: 'Jumlah Kepemilikan Aset Sepeda Motor',
+  jumlah_kepemilikan_aset_sepeda: 'Jumlah Kepemilikan Aset Sepeda',
+  jumlah_kepemilikan_aset_mobil: 'Jumlah Kepemilikan Aset Mobil',
+  jumlah_kepemilikan_aset_perahu: 'Jumlah Kepemilikan Aset Perahu',
+  jumlah_kepemilikan_aset_kapal_perahu_motor: 'Jumlah Kepemilikan Aset Kapal/Perahu/Motor',
+  jumlah_kepemilikan_aset_smartphone: 'Jumlah Kepemilikan Aset Smartphone',
+  kepemilikan_lahan_sawah_kebun_yang_diusahakan_sendiri: 'Kepemilikan Lahan Sawah/Kebun yang Diusahakan Sendiri',
+  kepemilikan_lahan_selain_yang_ditempati_m2: 'Kepemilikan Lahan Selain yang Ditempati (m2)',
+  kepemilikan_rumah_bangunan_di_tempat_lain_m2: 'Kepemilikan Rumah/Bangunan di Tempat Lain (m2)',
+  kepemilikan_sapi: 'Kepemilikan Sapi',
+  kepemilikan_kerbau: 'Kepemilikan Kerbau',
+  kepemilikan_kuda: 'Kepemilikan Kuda',
+  kepemilikan_babi: 'Kepemilikan Babi',
+  kepemilikan_kambing_atau_domba: 'Kepemilikan Kambing atau Domba',
+  flag: 'Desil Kesejahteraan',
+};
+
+export const getFilterLabelKeluarga = (columnName) => keluargaColumnsAliases[columnName] || columnName;
+
 export const getFilterLabel = (columnName) => masterColumnAliases[columnName] || columnName;

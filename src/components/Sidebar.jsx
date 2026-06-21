@@ -1,14 +1,14 @@
-import { Filter, Plus, X } from 'lucide-react';
+import { ChevronDown, Filter, Plus, X } from 'lucide-react';
 import Select from 'react-select';
-import { masterFilterColumns, getFilterLabel } from '../config/filter';
-
+import { masterFilterColumns, getFilterLabel, getFilterLabelKeluarga } from '../config/filter';
+import { useState } from 'react';
 const extractPrefix = (value) => {
   const raw = String(value || '');
   const digits = raw.match(/\d/g)?.join('') || '';
   return digits.length >= 7 ? digits.slice(0, 7) : raw.slice(0, 7);
 };
 
-const Sidebar = ({ activeFilters, columnOptions, addFilter, removeFilter, updateFilter, fetchOptions, fetchData, loading, isOpen }) => {
+const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, removeFilter, updateFilter, fetchOptions, fetchData, loading, isOpen }) => {
   const hasKecamatan = activeFilters.some((filter) => filter.column === 'kecamatan' && Array.isArray(filter.value) && filter.value.length > 0);
 
   const kecamatanPrefixes = activeFilters
@@ -21,6 +21,8 @@ const Sidebar = ({ activeFilters, columnOptions, addFilter, removeFilter, update
     if (!hasKecamatan) return [];
     return allDesa.filter((option) => kecamatanPrefixes.some((prefix) => extractPrefix(option) === prefix));
   };
+
+  const [openIndex, setOpenIndex] = useState(null);
 
   return (
     <aside className={`bg-white border-r flex flex-col shadow-inner transition-all duration-300 ${isOpen ? 'w-80 h-auto overflow-auto ' : 'w-0 overflow-hidden'}`}>
@@ -47,78 +49,116 @@ const Sidebar = ({ activeFilters, columnOptions, addFilter, removeFilter, update
             const safeMax = Math.max(currentMin, currentMax);
 
             return (
-              <div key={idx} className="p-3 bg-slate-50 border rounded-xl relative group animate-in slide-in-from-left-2">
-                <button onClick={() => removeFilter(idx)} className="absolute -top-2 -right-2 bg-white shadow-sm border text-red-500 rounded-full p-1">
-                  <X size={12} />
-                </button>
+              <div key={idx} className="bg-slate-50 border rounded-xl overflow-hidden animate-in slide-in-from-left-2">
+                {/* HEADER ACCORDION */}
+                <div onClick={() => setOpenIndex(openIndex === idx ? null : idx)} className="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-100">
+                  <div className="text-xs font-bold text-slate-700">{f.column ? (tableSection === 'individu' ? getFilterLabel(f.column) : tableSection === 'keluarga' ? getFilterLabelKeluarga(f.column) : f.column) : 'Pilih Kategori'}</div>
 
-                <Select
-                  className="w-full text-xs font-bold mb-2"
-                  options={masterFilterColumns.map((c) => ({
-                    value: c,
-                    label: getFilterLabel(c),
-                    isDisabled: c === 'desa_kelurahan' && !hasKecamatan,
-                  }))}
-                  value={f.column ? { value: f.column, label: getFilterLabel(f.column) } : null}
-                  onChange={(opt) => fetchOptions(idx, opt.value)}
-                  placeholder="Pilih Kategori..."
-                  menuPortalTarget={document.body}
-                  menuPosition="fixed"
-                  styles={{
-                    menuPortal: (base) => ({
-                      ...base,
-                      zIndex: 9999,
-                    }),
-                  }}
-                  isClearable
-                />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFilter(idx);
+                      }}
+                      className="bg-white shadow-sm border text-red-500 rounded-full p-1"
+                    >
+                      <X size={12} />
+                    </button>
 
-                {f.column && (
-                  <div>
-                    {f.column === 'umur' ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between text-sm text-slate-700">
-                          <span>Rentang Umur</span>
-                          <span className="font-semibold">
-                            {safeMin} - {safeMax}
-                          </span>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">Minimum</label>
-                          <input type="range" min={umurMin} max={umurMax} step={1} value={safeMin} onChange={(event) => updateFilter(idx, 'value', { min: Number(event.target.value), max: safeMax })} className="w-full" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-slate-500 mb-1">Maximum</label>
-                          <input type="range" min={umurMin} max={umurMax} step={1} value={safeMax} onChange={(event) => updateFilter(idx, 'value', { min: safeMin, max: Number(event.target.value) })} className="w-full" />
-                        </div>
-                      </div>
-                    ) : f.column === 'desa_kelurahan' && !hasKecamatan ? (
-                      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">Pilih kecamatan terlebih dahulu agar desa/kelurahan dapat dipilih.</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {optionValues.length === 0 ? (
-                          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-                            {f.column === 'desa_kelurahan' ? 'Tidak ada desa/kelurahan untuk kecamatan terpilih atau opsi belum dimuat.' : 'Pilih kategori untuk melihat opsi.'}
+                    <span className={`transition-transform ${openIndex === idx ? 'rotate-180' : ''}`}>
+                      <ChevronDown />
+                    </span>
+                  </div>
+                </div>
+
+                {/* BODY ACCORDION */}
+                {openIndex === idx && (
+                  <div className="p-3 border-t">
+                    <Select
+                      className="w-full text-xs font-bold mb-2"
+                      options={masterFilterColumns.map((c) => ({
+                        value: c,
+                        label: tableSection === 'individu' ? getFilterLabel(c) : tableSection === 'keluarga' ? getFilterLabelKeluarga(c) : c === 'umur' ? 'Umur' : c === 'desa_kelurahan' ? 'Desa/Kelurahan' : c,
+                        isDisabled: c === 'desa_kelurahan' && !hasKecamatan,
+                      }))}
+                      value={
+                        f.column
+                          ? {
+                              value: f.column,
+                              label: tableSection === 'individu' ? getFilterLabel(f.column) : tableSection === 'keluarga' ? getFilterLabelKeluarga(f.column) : f.column,
+                            }
+                          : null
+                      }
+                      onChange={(opt) => fetchOptions(idx, opt.value)}
+                      placeholder="Pilih Kategori..."
+                      menuPortalTarget={document.body}
+                      menuPosition="fixed"
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      isClearable
+                    />
+
+                    {f.column && (
+                      <div>
+                        {f.column === 'umur' ? (
+                          <div className="space-y-4">
+                            <div className="flex justify-between text-sm text-slate-700">
+                              <span>Rentang Umur</span>
+                              <span className="font-semibold">
+                                {safeMin} - {safeMax}
+                              </span>
+                            </div>
+
+                            <input
+                              type="range"
+                              min={umurMin}
+                              max={umurMax}
+                              value={safeMin}
+                              onChange={(e) =>
+                                updateFilter(idx, 'value', {
+                                  min: Number(e.target.value),
+                                  max: safeMax,
+                                })
+                              }
+                            />
+
+                            <input
+                              type="range"
+                              min={umurMin}
+                              max={umurMax}
+                              value={safeMax}
+                              onChange={(e) =>
+                                updateFilter(idx, 'value', {
+                                  min: safeMin,
+                                  max: Number(e.target.value),
+                                })
+                              }
+                            />
                           </div>
+                        ) : f.column === 'desa_kelurahan' && !hasKecamatan ? (
+                          <div className="rounded-xl border border-dashed p-4 text-sm text-slate-600">Pilih kecamatan terlebih dahulu agar desa/kelurahan dapat dipilih.</div>
                         ) : (
-                          optionValues.map((option) => {
-                            const value = String(option);
-                            const isChecked = selectedValues.includes(value);
-                            return (
-                              <label key={value} className="flex items-center gap-2 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() => {
-                                    const nextValues = isChecked ? selectedValues.filter((item) => item !== value) : [...selectedValues, value];
-                                    updateFilter(idx, 'value', nextValues);
-                                  }}
-                                  className="rounded border-slate-300 text-blue-600 shadow-sm focus:ring-blue-500"
-                                />
-                                <span className="truncate">{value}</span>
-                              </label>
-                            );
-                          })
+                          <div className="space-y-2">
+                            {optionValues.map((option) => {
+                              const value = String(option);
+                              const isChecked = selectedValues.includes(value);
+
+                              return (
+                                <label key={value} className="flex items-center gap-2 text-sm">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      const next = isChecked ? selectedValues.filter((v) => v !== value) : [...selectedValues, value];
+                                      updateFilter(idx, 'value', next);
+                                    }}
+                                  />
+                                  <span className="truncate">{value}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     )}

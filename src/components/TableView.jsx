@@ -1,29 +1,65 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { Eye, Search, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender } from '@tanstack/react-table';
+import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 
-const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, activeFilters = [] }) => {
+const TableView = ({ section = 'individu', setSection, data, page, total, limit, fetchData, setSelectedIndividu, activeFilters = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sorting, setSorting] = useState([]);
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const handleShowDetail = useCallback(
     async (row) => {
-      const id = row.ind_uid || row.id_ui || row.id;
+      const id = section === 'keluarga' ? row.kk_uid || row.KK : row.ind_uid || row.id_ui || row.id;
       if (!id) return;
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/individu/${id}`);
-        setSelectedIndividu(res.data.data || null);
+        const endpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/${id}` : `${import.meta.env.VITE_API_URL}/individu/${id}`;
+        const res = await axios.get(endpoint);
+        res.data.section = section;
+        setSelectedIndividu(res.data.data || res.data || null);
       } catch (error) {
-        console.error('Gagal ambil detail individu', error);
+        console.error('Gagal ambil detail', error);
       }
     },
-    [setSelectedIndividu],
+    [section, setSelectedIndividu],
   );
 
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => {
+    if (section === 'keluarga') {
+      return [
+        {
+          accessorKey: 'nama_kepala_keluarga',
+          header: 'NAMA KEPALA KELUARGA',
+          cell: (info) => <span>{info.getValue()}</span>,
+        },
+        {
+          accessorKey: 'nomor_kk',
+          header: 'NO. KK',
+          cell: (info) => <span className="font-mono text-xs">{info.getValue()}</span>,
+        },
+        {
+          accessorKey: 'flag',
+          header: 'DESIL',
+          cell: (info) => <span className={`bg-orange-100 ${info.getValue()?.match(/\d+/)?.[0] === '1' ? 'text-orange-700' : 'text-gray-700'} px-3 py-1 rounded-full text-xs font-black`}>{info.getValue().match(/\d+/)?.[0] || '1'}</span>,
+        },
+        {
+          accessorKey: 'desa_kelurahan',
+          header: 'DESA',
+        },
+        {
+          id: 'detail',
+          header: 'DETAIL',
+          cell: (info) => (
+            <button type="button" onClick={() => handleShowDetail(info.row.original)} className="p-2 hover:bg-blue-100 text-blue-600 rounded-lg">
+              <Eye size={16} />
+            </button>
+          ),
+          enableSorting: false,
+        },
+      ];
+    }
+
+    return [
       {
         accessorKey: 'Nama Lengkap Individu',
         header: 'NAMA LENGKAP',
@@ -53,14 +89,17 @@ const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, a
         ),
         enableSorting: false,
       },
-    ],
-    [handleShowDetail],
-  );
+    ];
+  }, [handleShowDetail, section]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 500);
     return () => clearTimeout(t);
   }, [searchTerm]);
+
+  useEffect(() => {
+    setSorting([]);
+  }, [section]);
 
   const mapSort = (sortingArr) => {
     if (!sortingArr || sortingArr.length === 0) return null;
@@ -72,6 +111,9 @@ const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, a
       'Nomor KTP/NIK': 'nik',
       desa_kelurahan: 'desa_kelurahan',
       flag: 'flag',
+      kk_uid: 'kk_uid',
+      'Nama Kepala Keluarga': 'nama',
+      'Nomor KK': 'kk',
     };
     const column = map[id] || id;
     return { column, order };
@@ -81,8 +123,8 @@ const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, a
     const currentSort = mapSort(sorting);
     fetchData(1, {
       search: debouncedSearch || undefined,
-      sortBy: currentSort?.column || 'nama',
-      sortOrder: currentSort?.order || 'asc',
+      sortBy: currentSort?.column,
+      sortOrder: currentSort?.order,
     });
   }, [debouncedSearch, sorting, fetchData]);
 
@@ -93,8 +135,8 @@ const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, a
       sorting,
     },
     onSortingChange: setSorting,
+    manualSorting: true,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   const handleExportToExcel = () => {
@@ -116,8 +158,10 @@ const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, a
       filterPayload[f.column] = [f.value];
     });
 
+    const exportEndpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/export` : `${import.meta.env.VITE_API_URL}/individu/export`;
+
     axios
-      .post(`${import.meta.env.VITE_API_URL}/individu/export`, { filters: filterPayload })
+      .post(exportEndpoint, { filters: filterPayload })
       .then(() => {
         // Export initiated by API call; response is handled by backend.
       })
@@ -143,10 +187,16 @@ const TableView = ({ data, page, total, limit, fetchData, setSelectedIndividu, a
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
-          <button onClick={handleExportToExcel} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium text-sm whitespace-nowrap">
-            <Download size={16} />
-            Export Excel
-          </button>
+          <div className="flex items-center gap-2">
+            <select value={section} onChange={(e) => setSection(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
+              <option value="individu">Individu</option>
+              <option value="keluarga">Keluarga</option>
+            </select>
+            {/* <button onClick={handleExportToExcel} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium text-sm whitespace-nowrap">
+              <Download size={16} />
+              Export Excel
+            </button> */}
+          </div>
         </div>
 
         {/* Table */}

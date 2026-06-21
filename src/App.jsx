@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import Header from './components/Header';
@@ -16,6 +16,7 @@ function App() {
   const [columnOptions, setColumnOptions] = useState({});
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [tableSection, setTableSection] = useState('individu');
   const limit = 100;
   const [selectedIndividu, setSelectedIndividu] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -67,24 +68,25 @@ function App() {
         if (opts.sortBy) body.sortBy = opts.sortBy;
         if (opts.sortOrder) body.sortOrder = opts.sortOrder;
 
-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/individu/search`, body);
+        const endpoint = tableSection === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga` : `${import.meta.env.VITE_API_URL}/individu/search`;
+        const res = await axios.post(endpoint, body);
 
-        setData(res.data.data);
-        setTotal(res.data.total);
+        setData(res.data.data || res.data || []);
+        setTotal(res.data.total || 0);
         setPage(targetPage);
-        setMapData(res.data.data);
+        setMapData(res.data.data || res.data || []);
       } catch (error) {
         console.error(error);
       }
       setLoading(false);
     },
-    [activeFilters],
+    [activeFilters, tableSection],
   );
 
   const fetchOptions = async (index, columnName) => {
     if (!columnName) return;
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/options/${columnName}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/options/${columnName}/${tableSection}`);
       setColumnOptions((prev) => ({ ...prev, [columnName]: res.data.options }));
       setActiveFilters((prev) => {
         const next = [...prev];
@@ -112,11 +114,13 @@ function App() {
   };
 
   const handleMapMarkerClick = async (item) => {
-    const id = item.ind_uid || item.id_ui || item.id;
+    const id = item.ind_uid || item.id_ui || item.id || item.kk_uid;
     if (!id) return;
 
+    const url = item.ind_uid ? `${import.meta.env.VITE_API_URL}/individu/${id}` : `${import.meta.env.VITE_API_URL}/keluarga/${id}`;
+
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/individu/${id}`);
+      const res = await axios.get(url);
       setSelectedIndividu(res.data.data || res.data || null);
     } catch (error) {
       console.error('Gagal ambil detail individu dari map', error);
@@ -124,14 +128,7 @@ function App() {
   };
 
   // load initial page once
-  useEffect(() => {
-    const load = async () => {
-      await fetchData(1);
-    };
-    load();
-    // intentionally ignore fetchData in deps to run only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Initial fetch is handled by TableView's own search/sort effect.
 
   return (
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
@@ -140,6 +137,7 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           activeFilters={activeFilters}
+          tableSection={tableSection}
           columnOptions={columnOptions}
           addFilter={addFilter}
           removeFilter={removeFilter}
@@ -153,7 +151,7 @@ function App() {
 
         <main className="flex-1 relative">
           {view === 'table' ? (
-            <TableView data={data} page={page} total={total} limit={limit} fetchData={fetchData} setSelectedIndividu={setSelectedIndividu} />
+            <TableView section={tableSection} setSection={setTableSection} data={data} page={page} total={total} limit={limit} fetchData={fetchData} setSelectedIndividu={setSelectedIndividu} activeFilters={activeFilters} />
           ) : (
             <MapView mapData={mapData} getMarkerColor={getMarkerColor} onMarkerClick={handleMapMarkerClick} />
           )}

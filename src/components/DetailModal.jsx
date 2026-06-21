@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 
 const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
   const [fullImage, setFullImage] = useState(null);
@@ -17,9 +17,9 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
   const getDetailEntries = (row) =>
-    Object.entries(row || {}).filter(([key, value]) => {
+    Object.entries(row || {}).filter(([value]) => {
       if (value === null || value === undefined || value === '') return false;
-      return !['lokasi'].includes(key);
+      return true;
     });
 
   const getProxyPhotoUrl = (photoPath) => `${import.meta.env.VITE_API_URL}/photo-proxy?path=${encodeURIComponent(photoPath)}`;
@@ -31,8 +31,8 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
       <div className="w-full max-w-4xl max-h-[90vh] rounded-3xl bg-white shadow-2xl border overflow-hidden flex flex-col">
         <div className="flex items-start justify-between gap-4 border-b px-6 py-5 bg-gradient-to-r from-slate-50 to-blue-50">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Detail Individu</p>
-            <h3 className="text-2xl font-black text-slate-800 leading-tight">{selectedIndividu['Nama Lengkap Individu'] || '-'}</h3>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Detail {selectedIndividu['Nama Lengkap Individu'] ? 'Individu' : 'Keluarga'}</p>
+            <h3 className="text-2xl font-black text-slate-800 leading-tight">{selectedIndividu['Nama Lengkap Individu'] || selectedIndividu['nama_kepala_keluarga'] || '-'}</h3>
           </div>
           <button onClick={() => setSelectedIndividu(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-200 shrink-0">
             <X size={18} />
@@ -44,7 +44,7 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
             <div className="grid gap-0 border-b border-slate-200 bg-white sm:grid-cols-3">
               <div className="px-5 py-4">
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">NIK</p>
-                <p className="mt-1 break-words font-mono text-sm text-slate-800">{selectedIndividu['Nomor KTP/NIK'] || '-'}</p>
+                <p className="mt-1 break-words font-mono text-sm text-slate-800">{selectedIndividu['Nomor KTP/NIK'] || selectedIndividu['nomor_kk'] || '-'}</p>
               </div>
               <div className="px-5 py-4 sm:border-l sm:border-slate-200">
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Desil</p>
@@ -58,7 +58,7 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
 
             <div className="divide-y divide-slate-200">
               {getDetailEntries(selectedIndividu)
-                .filter(([key]) => !['Nama Lengkap Individu', 'Nomor KTP/NIK', 'flag', 'desa_kelurahan'].includes(key))
+                .filter(([key]) => !['Nama Lengkap Individu', 'Nomor KTP/NIK', 'flag', 'nama_kepala_keluarga', 'nomor_kk'].includes(key))
                 .map(([key, value]) => {
                   const isImageField = /foto/i.test(key) && typeof value === 'string';
 
@@ -69,6 +69,24 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
                         <div className="mt-3 overflow-hidden rounded-2xl border bg-slate-50">
                           <img src={getProxyPhotoUrl(value)} alt={formatFieldLabel(key)} className="h-56 w-full object-cover cursor-zoom-in" onClick={() => setFullImage(getProxyPhotoUrl(value))} />
                         </div>
+                      </div>
+                    );
+                  }
+
+                  if (key === 'lokasi' && typeof value === 'string') {
+                    return (
+                      // arahkan link ke Google Maps dengan query lokasi
+                      <div key={key} className="p-5">
+                        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{formatFieldLabel(key)}</p>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(value)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 text-sm font-bold px-3 py-2 rounded-lg bg-blue-600 text-white inline-block hover:bg-blue-700 transition-colors"
+                        >
+                          <MapPin size={16} className="inline-block mr-1" />
+                          Lihat di Google Maps
+                        </a>
                       </div>
                     );
                   }
