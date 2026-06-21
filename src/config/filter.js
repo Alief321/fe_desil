@@ -86,6 +86,7 @@ export const masterColumnAliases = {
   // KESEHATAN & ADMISISTRASI INDIVIDU
   'Penyandang Disabilitas': 'DISABILITAS',
   'Keluhan Kesehatan Kronis_Menahun': 'KELUHAN KESEHATAN KRONIS',
+  'Status Eligible': 'STATUS ELIGIBLE',
 };
 
 export const masterFilterColumns = [
@@ -176,6 +177,7 @@ export const masterFilterColumns = [
   // KESEHATAN & ADMISISTRASI INDIVIDU
   'Penyandang Disabilitas',
   'Keluhan Kesehatan Kronis_Menahun',
+  'Status Eligible',
 ];
 
 export const keluargaColumnsAliases = {
@@ -217,6 +219,7 @@ export const keluargaColumnsAliases = {
   kepemilikan_babi: 'Kepemilikan Babi',
   kepemilikan_kambing_atau_domba: 'Kepemilikan Kambing atau Domba',
   flag: 'Desil Kesejahteraan',
+  'Status Eligible': 'Status Eligible',
 };
 
 export const getFilterLabelKeluarga = (columnName) => keluargaColumnsAliases[columnName] || columnName;

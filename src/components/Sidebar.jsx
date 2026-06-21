@@ -138,6 +138,17 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                           </div>
                         ) : f.column === 'desa_kelurahan' && !hasKecamatan ? (
                           <div className="rounded-xl border border-dashed p-4 text-sm text-slate-600">Pilih kecamatan terlebih dahulu agar desa/kelurahan dapat dipilih.</div>
+                        ) : f.column === 'Status Eligible' ? (
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={selectedValues.includes(true)}
+                                onChange={() => updateFilter(idx, 'value', selectedValues.includes(true) ? selectedValues.filter((v) => v !== true) : [...selectedValues, true])}
+                              />
+                              <span>Eligible</span>
+                            </label>
+                          </div>
                         ) : (
                           <div className="space-y-2">
                             {optionValues.map((option) => {

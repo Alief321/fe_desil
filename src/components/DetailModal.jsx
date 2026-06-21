@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { MapPin, X } from 'lucide-react';
 
 const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
   const [fullImage, setFullImage] = useState(null);
+  const [updatingEligible, setUpdatingEligible] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -34,9 +36,32 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Detail {selectedIndividu['Nama Lengkap Individu'] ? 'Individu' : 'Keluarga'}</p>
             <h3 className="text-2xl font-black text-slate-800 leading-tight">{selectedIndividu['Nama Lengkap Individu'] || selectedIndividu['nama_kepala_keluarga'] || '-'}</h3>
           </div>
-          <button onClick={() => setSelectedIndividu(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-200 shrink-0">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                const id = selectedIndividu.ind_uid || selectedIndividu.id_ui || selectedIndividu.id || selectedIndividu.kk_uid || selectedIndividu.nomor_kk;
+                if (!id) return;
+                try {
+                  setUpdatingEligible(true);
+                  await axios.patch(`${import.meta.env.VITE_API_URL}/eligible/${encodeURIComponent(id)}`, { eligible: true });
+                  alert('Status eligible berhasil diperbarui.');
+                  setSelectedIndividu({ ...selectedIndividu, eligible: true });
+                } catch (error) {
+                  console.error('Gagal ubah eligible', error);
+                  alert('Gagal memperbarui eligible. Silakan coba lagi.');
+                } finally {
+                  setUpdatingEligible(false);
+                }
+              }}
+              disabled={updatingEligible}
+              className="rounded-full bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {updatingEligible ? 'Memperbarui...' : 'Ubah Eligible'}
+            </button>
+            <button onClick={() => setSelectedIndividu(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-200 shrink-0">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50/60">

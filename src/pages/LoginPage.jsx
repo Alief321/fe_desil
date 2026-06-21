@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Mail, Lock, AlertCircle, Loader } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const from = location.state?.from?.pathname || '/dashboard';
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,11 +30,10 @@ export default function LoginPage() {
         password,
       });
 
-      // Simpan token ke localStorage
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
 
-      navigate('/dashboard');
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Login gagal. Cek email dan password Anda.');
     } finally {
@@ -38,8 +46,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Data Desil</h1>
-          <p className="text-slate-600">Sistem Informasi Data Kemiskinan</p>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">DESIL MASTER</h1>
+          <p className="text-slate-600">Sistem Informasi Data DTSEN</p>
         </div>
 
         {/* Card */}
@@ -110,18 +118,18 @@ export default function LoginPage() {
 
           {/* Footer */}
           <p className="text-center text-slate-600 text-sm mt-6">
-            Belum punya akun?{' '}
-            <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-              Daftar di sini
+            Lupa password?{' '}
+            <Link to="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
+              Reset sekarang
             </Link>
           </p>
         </div>
 
         {/* Info Box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+        {/* <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
           <p className="font-medium mb-1">Demo Login</p>
           <p className="text-blue-700">Email: admin@desil.local | Password: admin123</p>
-        </div>
+        </div> */}
       </div>
     </div>
   );

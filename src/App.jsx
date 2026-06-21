@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import Header from './components/Header';
@@ -6,8 +7,25 @@ import Sidebar from './components/Sidebar';
 import TableView from './components/TableView';
 import MapView from './components/MapView';
 import DetailModal from './components/DetailModal';
+import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
-function App() {
+function getToken() {
+  return localStorage.getItem('token');
+}
+
+function ProtectedRoute({ children }) {
+  const location = useLocation();
+  if (!getToken()) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  return children;
+}
+
+function Dashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [mapData, setMapData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,6 +38,12 @@ function App() {
   const limit = 100;
   const [selectedIndividu, setSelectedIndividu] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login', { replace: true });
+  };
 
   const getMarkerColor = (desil) => {
     const normalized = String(desil || '').trim();
@@ -86,6 +110,16 @@ function App() {
   const fetchOptions = async (index, columnName) => {
     if (!columnName) return;
     try {
+      if (columnName === 'Status Eligible') {
+        setColumnOptions((prev) => ({ ...prev, [columnName]: [true] }));
+        setActiveFilters((prev) => {
+          const next = [...prev];
+          next[index] = { column: columnName, value: [] };
+          return next;
+        });
+        return;
+      }
+
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/options/${columnName}/${tableSection}`);
       setColumnOptions((prev) => ({ ...prev, [columnName]: res.data.options }));
       setActiveFilters((prev) => {
@@ -127,12 +161,9 @@ function App() {
     }
   };
 
-  // load initial page once
-  // Initial fetch is handled by TableView's own search/sort effect.
-
   return (
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
-      <Header view={view} setView={setView} sidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <Header view={view} setView={setView} sidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={logout} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
@@ -163,4 +194,22 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}

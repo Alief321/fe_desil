@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Eye, Search, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
@@ -7,6 +7,56 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
   const [searchTerm, setSearchTerm] = useState('');
   const [sorting, setSorting] = useState([]);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const selectAllRef = useRef(null);
+
+  const getRowId = (row) => {
+    if (!row) return null;
+    return String(row.ind_uid || row.id_ui || row.id || row.kk_uid || row.kk || row.nomor_kk || row.NomorKTP || row['Nomor KTP/NIK'] || row['nomor_kk'] || row['kk_uid'] || row['id_ui'] || row['ind_uid'] || row['id'] || '').trim();
+  };
+
+  const visibleRowIds = useMemo(() => data.map((row) => getRowId(row)).filter(Boolean), [data]);
+  const allVisibleSelected = visibleRowIds.length > 0 && visibleRowIds.every((id) => selectedIds.includes(id));
+  const someVisibleSelected = visibleRowIds.some((id) => selectedIds.includes(id));
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someVisibleSelected && !allVisibleSelected;
+    }
+  }, [someVisibleSelected, allVisibleSelected]);
+
+  const toggleRowSelection = (id) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((value) => value !== id);
+      return [...prev, id];
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !visibleRowIds.includes(id)));
+      return;
+    }
+    const next = Array.from(new Set([...selectedIds, ...visibleRowIds]));
+    setSelectedIds(next);
+  };
+
+  const handleSetSelectedEligible = async () => {
+    const ids = Array.from(new Set(selectedIds.filter(Boolean)));
+    if (ids.length === 0) return;
+
+    console.log(ids);
+
+    try {
+      await Promise.all(ids.map((id) => axios.patch(`${import.meta.env.VITE_API_URL}/eligible/${encodeURIComponent(id)}`, { isEligible: true, source: section })));
+      setSelectedIds([]);
+      fetchData(page);
+      alert(`Berhasil memperbarui eligible untuk ${ids.length} item.`);
+    } catch (error) {
+      console.error('Gagal memperbarui eligible', error);
+      alert('Terjadi kesalahan saat memperbarui eligible. Silakan coba lagi.');
+    }
+  };
 
   const handleShowDetail = useCallback(
     async (row) => {
@@ -139,36 +189,36 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const handleExportToExcel = () => {
-    const filterPayload = {};
-    activeFilters.forEach((f) => {
-      if (!f.column || f.value === '' || f.value == null) return;
-      if (Array.isArray(f.value) && f.value.length === 0) return;
+  // const handleExportToExcel = () => {
+  //   const filterPayload = {};
+  //   activeFilters.forEach((f) => {
+  //     if (!f.column || f.value === '' || f.value == null) return;
+  //     if (Array.isArray(f.value) && f.value.length === 0) return;
 
-      if (f.column === 'umur' && typeof f.value === 'object' && f.value.min !== '' && f.value.max !== '') {
-        filterPayload[f.column] = [Number(f.value.min), Number(f.value.max)];
-        return;
-      }
+  //     if (f.column === 'umur' && typeof f.value === 'object' && f.value.min !== '' && f.value.max !== '') {
+  //       filterPayload[f.column] = [Number(f.value.min), Number(f.value.max)];
+  //       return;
+  //     }
 
-      if (Array.isArray(f.value)) {
-        filterPayload[f.column] = f.value;
-        return;
-      }
+  //     if (Array.isArray(f.value)) {
+  //       filterPayload[f.column] = f.value;
+  //       return;
+  //     }
 
-      filterPayload[f.column] = [f.value];
-    });
+  //     filterPayload[f.column] = [f.value];
+  //   });
 
-    const exportEndpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/export` : `${import.meta.env.VITE_API_URL}/individu/export`;
+  //   const exportEndpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/export` : `${import.meta.env.VITE_API_URL}/individu/export`;
 
-    axios
-      .post(exportEndpoint, { filters: filterPayload })
-      .then(() => {
-        // Export initiated by API call; response is handled by backend.
-      })
-      .catch((err) => {
-        console.error('Export API gagal', err);
-      });
-  };
+  //   axios
+  //     .post(exportEndpoint, { filters: filterPayload })
+  //     .then(() => {
+  //       // Export initiated by API call; response is handled by backend.
+  //     })
+  //     .catch((err) => {
+  //       console.error('Export API gagal', err);
+  //     });
+  // };
 
   const SortIcon = ({ column }) => {
     if (!column.getCanSort()) return null;
@@ -181,21 +231,27 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
   return (
     <div className="h-full flex flex-col p-6">
       <div className="flex-1 bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col">
-        {/* Search Bar & Export */}
-        <div className="p-4 border-b bg-slate-50 flex gap-3">
+        {/* Search Bar & Actions */}
+        <div className="p-4 border-b bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1 relative">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
-          <div className="flex items-center gap-2">
-            <select value={section} onChange={(e) => setSection(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
-              <option value="individu">Individu</option>
-              <option value="keluarga">Keluarga</option>
-            </select>
-            {/* <button onClick={handleExportToExcel} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium text-sm whitespace-nowrap">
-              <Download size={16} />
-              Export Excel
-            </button> */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <select value={section} onChange={(e) => setSection(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
+                <option value="individu">Individu</option>
+                <option value="keluarga">Keluarga</option>
+              </select>
+              {selectedIds.length > 0 && (
+                <div className="block  items-center gap-3">
+                  <button onClick={handleSetSelectedEligible} disabled={selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    Tandai Eligible
+                  </button>
+                  <div className="text-slate-500 text-sm font-semibold">{selectedIds.length > 0 ? `${selectedIds.length} item terpilih` : 'Tidak ada item terpilih'}</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -205,6 +261,9 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
             <thead className="bg-slate-50 border-b sticky top-0 z-20">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
+                  <th className="px-6 py-4">
+                    <input type="checkbox" ref={selectAllRef} checked={allVisibleSelected} onChange={toggleSelectAllVisible} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                  </th>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
@@ -221,15 +280,23 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
               ))}
             </thead>
             <tbody className="divide-y">
-              {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={cell.column.id === 'detail' ? 'px-6 py-4 text-center' : 'px-6 py-4'}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {table.getRowModel().rows.map((row) => {
+                const rowId = getRowId(row.original);
+                const isSelected = rowId && selectedIds.includes(rowId);
+
+                return (
+                  <tr key={row.id} className={` transition-colors ${row.original['Status Eligible'] ? 'bg-green-300 hover:bg-green-400' : 'hover:bg-slate-50'}`}>
+                    <td className="px-6 py-4">
+                      <input type="checkbox" checked={Boolean(isSelected)} onChange={() => toggleRowSelection(rowId)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className={cell.column.id === 'detail' ? 'px-6 py-4 text-center' : 'px-6 py-4'}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
