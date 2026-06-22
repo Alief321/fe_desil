@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios';
 import { Eye, Search, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
-import { downloadCardPng } from '../services/cardPrintService';
+import { downloadCardPng, downloadCardsZip } from '../services/cardPrintService';
 
 const TableView = ({ section = 'individu', setSection, data, page, total, limit, setLimit, setPage, fetchData, setSelectedIndividu, activeFilters = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -189,21 +189,39 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
 
     setBulkDownloading(true);
     try {
-      for (const row of selectedRows) {
+      if (selectedRows.length === 1) {
+        const row = selectedRows[0];
         const id = getRowId(row);
-        const name = row['Nama Lengkap Individu'] || row.nama_kepala_keluarga || row.name || '-';
-        const nik = row['Nomor KTP/NIK'] || row.nomor_kk || row.nik || '-';
-        const desa = row['desa_kelurahan'] || row.desa || row.kelurahan || '-';
-        await downloadCardPng(
-          {
-            section,
+        if (section === 'keluarga') {
+          await downloadCardPng({ section, id, name: row.nama_kepala_keluarga || row.name || '-', nik: row.nomor_kk || '-', desa: row.desa_kelurahan || '-', desil: row.flag || '-' }, `kartu-desil-keluarga-${id}.png`);
+        } else {
+          await downloadCardPng({ section, id, name: row['Nama Lengkap Individu'] || row.name || '-', nik: row['Nomor KTP/NIK'] || row.nik || '-', desa: row.desa_kelurahan || '-', desil: row.flag || '-' }, `kartu-desil-individu-${id}.png`);
+        }
+      } else {
+        const items = selectedRows.map((row) => {
+          const id = getRowId(row);
+          if (section === 'keluarga') {
+            return {
+              section: 'keluarga',
+              id,
+              name: row.nama_kepala_keluarga || row.name || '-',
+              nik: row.nomor_kk || row.kk || '-',
+              desil: row.flag || '-',
+              desa: row.desa_kelurahan || '-',
+            };
+          }
+
+          return {
+            section: 'individu',
             id,
-            name,
-            nik,
-            desa,
-          },
-          `kartu-desil-${section}-${id}.png`,
-        );
+            name: row['Nama Lengkap Individu'] || row.name || '-',
+            nik: row['Nomor KTP/NIK'] || row.nik || '-',
+            desil: row.flag || '-',
+            desa: row.desa_kelurahan || '-',
+          };
+        });
+
+        await downloadCardsZip(items, `kartu-desil-${section}.zip`);
       }
     } catch (error) {
       console.error('Gagal mengunduh kartu', error);

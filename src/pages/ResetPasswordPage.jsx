@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
         token,
-        password,
+        newPassword: password,
       });
 
       setSuccess(true);
@@ -84,8 +84,8 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Data Desil</h1>
-          <p className="text-slate-600">Sistem Informasi Data Kemiskinan</p>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">VIVA DTSEN</h1>
+          <p className="text-slate-600">Sistem Informasi Data Kesejahteraan Masyarakat</p>
         </div>
 
         {/* Card */}

@@ -44,7 +44,7 @@ const Header = ({ view, setView, sidebarOpen, toggleSidebar, onLogout, showViewT
           <MapPin size={20} />
         </div>
         <h1 className="text-xl font-black text-slate-800 tracking-tighter uppercase">
-          Desil<span className="text-blue-600">Master</span>
+          VIVA<span className="text-blue-600">DTSEN</span>
         </h1>
       </div>
 
@@ -79,7 +79,7 @@ const Header = ({ view, setView, sidebarOpen, toggleSidebar, onLogout, showViewT
             </Link>
             {user?.role === 'admin' && (
               <Link to="/add-user" className="block px-4 py-3 text-slate-700 hover:bg-slate-100" onClick={() => setMenuOpen(false)}>
-                <UserSearch size={16} className="inline mr-2" /> Tambah User
+                <UserSearch size={16} className="inline mr-2" /> Manajemen User
               </Link>
             )}
             <button

@@ -1,4 +1,5 @@
 import QRCode from 'qrcode';
+import JSZip from 'jszip';
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -9,7 +10,7 @@ function loadImage(src) {
   });
 }
 
-export async function createCardPng({ section, id, name, nik, desa }) {
+export async function createCardPng({ section, id, name, nik, desa, desil }) {
   const width = 1100;
   const height = 700;
   const canvas = document.createElement('canvas');
@@ -31,12 +32,12 @@ export async function createCardPng({ section, id, name, nik, desa }) {
 
   ctx.fillStyle = '#0f172a';
   ctx.font = 'bold 28px Inter, sans-serif';
-  ctx.fillText('Nama', 48, 200);
+  ctx.fillText(section == 'keluarga' ? 'Nama Kepala Keluarga' : 'Nama Lengkap', 48, 200);
   ctx.font = '600 26px Inter, sans-serif';
   ctx.fillText(name || '-', 48, 245);
 
   ctx.font = 'bold 28px Inter, sans-serif';
-  ctx.fillText('NIK', 48, 310);
+  ctx.fillText(section == 'keluarga' ? 'Nomor KK' : 'NIK', 48, 310);
   ctx.font = '600 26px Inter, sans-serif';
   ctx.fillText(nik || '-', 48, 355);
 
@@ -46,9 +47,14 @@ export async function createCardPng({ section, id, name, nik, desa }) {
   ctx.fillText(desa || '-', 48, 465);
 
   ctx.font = 'bold 28px Inter, sans-serif';
-  ctx.fillText('Tipe', 48, 530);
+  ctx.fillText('Desil', 48, 530);
   ctx.font = '600 26px Inter, sans-serif';
-  ctx.fillText(section === 'keluarga' ? 'Keluarga' : 'Individu', 48, 575);
+  ctx.fillText(desil || '-', 48, 575);
+
+  ctx.font = 'bold 28px Inter, sans-serif';
+  ctx.fillText('Tipe', 48, 640);
+  ctx.font = '600 26px Inter, sans-serif';
+  ctx.fillText(section === 'keluarga' ? 'Keluarga' : 'Individu', 48, 685);
 
   const qrLink = `${window.location.origin}/detail/${section}/${id}`;
   const qrDataUrl = await QRCode.toDataURL(qrLink, { margin: 1, width: 320 });
@@ -76,4 +82,30 @@ export async function downloadCardPng(data, fileName = 'kartu-desil.png') {
   a.href = dataUrl;
   a.download = fileName;
   a.click();
+}
+
+export async function downloadCardsZip(items = [], zipName = 'kartu-desil.zip') {
+  const zip = new JSZip();
+
+  for (const item of items) {
+    try {
+      const dataUrl = await createCardPng(item);
+      // convert dataURL to blob
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const safeId = (item.id || item._id || item.nik || item.nomor_kk || item.name || 'item').toString().replace(/[^a-z0-9-_]/gi, '_');
+      const fileName = `kartu-desil-${item.section || 'item'}-${safeId}.png`;
+      zip.file(fileName, blob);
+    } catch (err) {
+      console.error('Gagal buat kartu untuk', item, err);
+    }
+  }
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(content);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = zipName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }

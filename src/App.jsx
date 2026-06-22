@@ -11,8 +11,8 @@ import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
-import AddUserPage from './pages/AddUserPage';
 import DetailPage from './pages/DetailPage';
+import UserPage from './pages/UserPage';
 
 function getToken() {
   const localToken = localStorage.getItem('token');
@@ -260,7 +260,7 @@ export default function App() {
         path="/add-user"
         element={
           <ProtectedRoute>
-            <AddUserPage />
+            <UserPage />
           </ProtectedRoute>
         }
       />

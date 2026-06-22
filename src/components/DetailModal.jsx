@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { MapPin, X, Download, ExternalLink } from 'lucide-react';
 import { downloadCardPng } from '../services/cardPrintService';
@@ -6,6 +6,17 @@ import { downloadCardPng } from '../services/cardPrintService';
 const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
   const [fullImage, setFullImage] = useState(null);
   const [updatingEligible, setUpdatingEligible] = useState(false);
+
+  // cache to avoid refetching blobs for same path; cleared on unmount
+  const imageBlobUrlCache = useRef(new Map());
+  useEffect(() => {
+    return () => {
+      try {
+        imageBlobUrlCache.current.forEach((v) => URL.revokeObjectURL(v));
+      } catch (e) {}
+      imageBlobUrlCache.current.clear();
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -26,6 +37,46 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
     });
 
   const getProxyPhotoUrl = (photoPath) => `${import.meta.env.VITE_API_URL}/photo-proxy?path=${encodeURIComponent(photoPath)}`;
+
+  // Fetch image via axios so axios interceptors add Authorization header,
+  // then convert to object URL so it can be used in <img> src.
+  const fetchImageBlobUrl = async (photoPath) => {
+    try {
+      const cache = imageBlobUrlCache.current;
+      if (cache.has(photoPath)) return cache.get(photoPath);
+      const url = getProxyPhotoUrl(photoPath);
+      const res = await axios.get(url, { responseType: 'blob' });
+      const obj = URL.createObjectURL(res.data);
+      cache.set(photoPath, obj);
+      return obj;
+    } catch (err) {
+      console.error('Gagal load foto', err);
+      return null;
+    }
+  };
+
+  const ImageWithAuth = ({ path, alt, className, onClick }) => {
+    const [objUrl, setObjUrl] = useState(null);
+
+    useEffect(() => {
+      let mounted = true;
+      fetchImageBlobUrl(path).then((u) => {
+        if (!mounted) return;
+        setObjUrl(u);
+      });
+      return () => {
+        mounted = false;
+      };
+    }, [path]);
+
+    if (!objUrl)
+      return (
+        <div className="h-56 w-full bg-slate-100 flex items-center justify-center text-slate-400 ">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+      );
+    return <img src={objUrl} alt={alt} className={className} onClick={onClick ? () => onClick(objUrl) : undefined} />;
+  };
 
   if (!selectedIndividu) return null;
 
@@ -64,13 +115,17 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
               onClick={async () => {
                 const id = selectedIndividu.ind_uid || selectedIndividu.id_ui || selectedIndividu.id || selectedIndividu.kk_uid || selectedIndividu.nomor_kk;
                 const section = selectedIndividu.section || (selectedIndividu['Nama Lengkap Individu'] ? 'individu' : 'keluarga');
-                await downloadCardPng({
-                  section,
-                  id,
-                  name: selectedIndividu['Nama Lengkap Individu'] || selectedIndividu.nama_kepala_keluarga || selectedIndividu.name || '-',
-                  nik: selectedIndividu['Nomor KTP/NIK'] || selectedIndividu.nomor_kk || selectedIndividu.nik || '-',
-                  desa: selectedIndividu['desa_kelurahan'] || selectedIndividu.desa || selectedIndividu.kelurahan || '-',
-                });
+                await downloadCardPng(
+                  {
+                    section,
+                    id,
+                    name: selectedIndividu['Nama Lengkap Individu'] || selectedIndividu.nama_kepala_keluarga || selectedIndividu.name || '-',
+                    nik: selectedIndividu['Nomor KTP/NIK'] || selectedIndividu.nomor_kk || selectedIndividu.nik || '-',
+                    desa: selectedIndividu['desa_kelurahan'] || selectedIndividu.desa || selectedIndividu.kelurahan || '-',
+                    desil: selectedIndividu.flag || '-',
+                  },
+                  `kartu-desil-${section}-${id}.png`,
+                );
               }}
               className="rounded-full bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700"
             >
@@ -110,7 +165,7 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
                       <div key={key} className="p-5">
                         <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{formatFieldLabel(key)}</p>
                         <div className="mt-3 overflow-hidden rounded-2xl border bg-slate-50">
-                          <img src={getProxyPhotoUrl(value)} alt={formatFieldLabel(key)} className="h-56 w-full object-cover cursor-zoom-in" onClick={() => setFullImage(getProxyPhotoUrl(value))} />
+                          <ImageWithAuth path={value} alt={formatFieldLabel(key)} className="h-56 w-full object-cover cursor-zoom-in" onClick={(obj) => setFullImage(obj)} />
                         </div>
                       </div>
                     );
