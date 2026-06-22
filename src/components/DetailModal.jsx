@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, X, Download, ExternalLink } from 'lucide-react';
+import { downloadCardPng } from '../services/cardPrintService';
 
 const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
   const [fullImage, setFullImage] = useState(null);
@@ -36,7 +37,7 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Detail {selectedIndividu['Nama Lengkap Individu'] ? 'Individu' : 'Keluarga'}</p>
             <h3 className="text-2xl font-black text-slate-800 leading-tight">{selectedIndividu['Nama Lengkap Individu'] || selectedIndividu['nama_kepala_keluarga'] || '-'}</h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
               onClick={async () => {
                 const id = selectedIndividu.ind_uid || selectedIndividu.id_ui || selectedIndividu.id || selectedIndividu.kk_uid || selectedIndividu.nomor_kk;
@@ -57,6 +58,23 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
               className="rounded-full bg-blue-600 px-4 py-2 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updatingEligible ? 'Memperbarui...' : 'Ubah Eligible'}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const id = selectedIndividu.ind_uid || selectedIndividu.id_ui || selectedIndividu.id || selectedIndividu.kk_uid || selectedIndividu.nomor_kk;
+                const section = selectedIndividu.section || (selectedIndividu['Nama Lengkap Individu'] ? 'individu' : 'keluarga');
+                await downloadCardPng({
+                  section,
+                  id,
+                  name: selectedIndividu['Nama Lengkap Individu'] || selectedIndividu.nama_kepala_keluarga || selectedIndividu.name || '-',
+                  nik: selectedIndividu['Nomor KTP/NIK'] || selectedIndividu.nomor_kk || selectedIndividu.nik || '-',
+                  desa: selectedIndividu['desa_kelurahan'] || selectedIndividu.desa || selectedIndividu.kelurahan || '-',
+                });
+              }}
+              className="rounded-full bg-emerald-600 px-4 py-2 text-white text-sm font-semibold hover:bg-emerald-700"
+            >
+              <Download size={16} className="inline mr-2" /> Cetak Kartu
             </button>
             <button onClick={() => setSelectedIndividu(null)} className="rounded-full p-2 text-slate-500 hover:bg-slate-200 shrink-0">
               <X size={18} />

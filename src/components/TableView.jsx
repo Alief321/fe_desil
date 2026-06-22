@@ -2,9 +2,11 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import axios from 'axios';
 import { Eye, Search, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
+import { downloadCardPng } from '../services/cardPrintService';
 
-const TableView = ({ section = 'individu', setSection, data, page, total, limit, fetchData, setSelectedIndividu, activeFilters = [] }) => {
+const TableView = ({ section = 'individu', setSection, data, page, total, limit, setLimit, setPage, fetchData, setSelectedIndividu, activeFilters = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [bulkDownloading, setBulkDownloading] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
@@ -169,6 +171,48 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
     return { column, order };
   };
 
+  const handleLimitChange = async (nextLimit) => {
+    setLimit(nextLimit);
+    setPage(1);
+    const currentSort = mapSort(sorting);
+    await fetchData(1, {
+      search: debouncedSearch,
+      sortBy: currentSort?.column,
+      sortOrder: currentSort?.order,
+      limit: nextLimit,
+    });
+  };
+
+  const handleDownloadSelectedCards = async () => {
+    const selectedRows = data.filter((row) => selectedIds.includes(getRowId(row)));
+    if (selectedRows.length === 0) return;
+
+    setBulkDownloading(true);
+    try {
+      for (const row of selectedRows) {
+        const id = getRowId(row);
+        const name = row['Nama Lengkap Individu'] || row.nama_kepala_keluarga || row.name || '-';
+        const nik = row['Nomor KTP/NIK'] || row.nomor_kk || row.nik || '-';
+        const desa = row['desa_kelurahan'] || row.desa || row.kelurahan || '-';
+        await downloadCardPng(
+          {
+            section,
+            id,
+            name,
+            nik,
+            desa,
+          },
+          `kartu-desil-${section}-${id}.png`,
+        );
+      }
+    } catch (error) {
+      console.error('Gagal mengunduh kartu', error);
+      alert('Gagal mengunduh beberapa kartu. Silakan coba lagi.');
+    } finally {
+      setBulkDownloading(false);
+    }
+  };
+
   useEffect(() => {
     const currentSort = mapSort(sorting);
     fetchData(1, {
@@ -237,20 +281,29 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <div className="flex items-center gap-3">
               <select value={section} onChange={(e) => setSection(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
                 <option value="individu">Individu</option>
                 <option value="keluarga">Keluarga</option>
               </select>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {selectedIds.length > 0 && (
-                <div className="block  items-center gap-3">
+                <>
                   <button onClick={handleSetSelectedEligible} disabled={selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     Tandai Eligible
                   </button>
-                  <div className="text-slate-500 text-sm font-semibold">{selectedIds.length > 0 ? `${selectedIds.length} item terpilih` : 'Tidak ada item terpilih'}</div>
-                </div>
+                  <button
+                    onClick={handleDownloadSelectedCards}
+                    disabled={selectedIds.length === 0 || bulkDownloading}
+                    className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {bulkDownloading ? 'Mengunduh...' : `Unduh ${selectedIds.length} kartu`}
+                  </button>
+                </>
               )}
+              <div className="text-slate-500 text-sm font-semibold">{selectedIds.length > 0 ? `${selectedIds.length} item terpilih` : 'Tidak ada item terpilih'}</div>
             </div>
           </div>
         </div>
@@ -306,10 +359,12 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
           <button
             onClick={() => {
               const currentSort = mapSort(sorting);
+              setPage(page - 1);
               fetchData(page - 1, {
                 search: debouncedSearch,
                 sortBy: currentSort?.column || 'nama',
                 sortOrder: currentSort?.order || 'asc',
+                limit,
               });
             }}
             disabled={page === 1}
@@ -317,16 +372,30 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
           >
             Prev
           </button>
-          <span>
-            HALAMAN {page} / {Math.ceil(total / limit)} ({total} DATA)
-          </span>
+
+          <div className="flex gap-2 items-center">
+            <select value={limit} onChange={(e) => handleLimitChange(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">
+              <option value={10}>10 / halaman</option>
+              <option value={25}>25 / halaman</option>
+              <option value={50}>50 / halaman</option>
+              <option value={100}>100 / halaman</option>
+              <option value={250}>250 / halaman</option>
+              <option value={500}>500 / halaman</option>
+              <option value={1000}>1000 / halaman</option>
+            </select>
+            <span>
+              HALAMAN {page} / {Math.ceil(total / limit)} ({total} DATA)
+            </span>
+          </div>
           <button
             onClick={() => {
               const currentSort = mapSort(sorting);
+              setPage(page + 1);
               fetchData(page + 1, {
                 search: debouncedSearch,
                 sortBy: currentSort?.column || 'nama',
                 sortOrder: currentSort?.order || 'asc',
+                limit,
               });
             }}
             disabled={page * limit >= total}

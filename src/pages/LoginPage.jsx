@@ -30,7 +30,11 @@ export default function LoginPage() {
         password,
       });
 
-      localStorage.setItem('token', res.data.token);
+      const token = res.data.token;
+      if (token) {
+        localStorage.setItem('token', token);
+        document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+      }
       localStorage.setItem('user', JSON.stringify(res.data.user));
 
       navigate(from, { replace: true });

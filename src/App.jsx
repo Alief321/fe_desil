@@ -10,9 +10,17 @@ import DetailModal from './components/DetailModal';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ProfilePage from './pages/ProfilePage';
+import AddUserPage from './pages/AddUserPage';
+import DetailPage from './pages/DetailPage';
 
 function getToken() {
-  return localStorage.getItem('token');
+  const localToken = localStorage.getItem('token');
+  if (localToken) return localToken;
+
+  const cookieToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('token='));
+
+  return cookieToken?.split('=')[1] || null;
 }
 
 function ProtectedRoute({ children }) {
@@ -24,24 +32,43 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function GeneralPageLayout({ children }) {
+  const navigate = useNavigate();
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    document.cookie = 'token=; path=/; max-age=0';
+    navigate('/login', { replace: true });
+  };
+
+  return (
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+      <Header showViewToggle={false} showSidebarToggle={false} onLogout={logout} />
+      <main className="flex-1 overflow-auto p-6">{children}</main>
+    </div>
+  );
+}
+
 function Dashboard() {
   const navigate = useNavigate();
+  const [view, setView] = useState('table');
   const [data, setData] = useState([]);
   const [mapData, setMapData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState('table');
   const [activeFilters, setActiveFilters] = useState([]);
   const [columnOptions, setColumnOptions] = useState({});
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [tableSection, setTableSection] = useState('individu');
-  const limit = 100;
+  const [limit, setLimit] = useState(100);
   const [selectedIndividu, setSelectedIndividu] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    document.cookie = 'token=; path=/; max-age=0';
     navigate('/login', { replace: true });
   };
 
@@ -82,9 +109,10 @@ function Dashboard() {
           filterPayload[f.column] = [f.value];
         });
 
+        const fetchLimit = opts.limit || limit;
         const body = {
           page: targetPage,
-          limit,
+          limit: fetchLimit,
           filters: filterPayload,
         };
 
@@ -104,7 +132,7 @@ function Dashboard() {
       }
       setLoading(false);
     },
-    [activeFilters, tableSection],
+    [activeFilters, tableSection, limit],
   );
 
   const fetchOptions = async (index, columnName) => {
@@ -182,7 +210,19 @@ function Dashboard() {
 
         <main className="flex-1 relative">
           {view === 'table' ? (
-            <TableView section={tableSection} setSection={setTableSection} data={data} page={page} total={total} limit={limit} fetchData={fetchData} setSelectedIndividu={setSelectedIndividu} activeFilters={activeFilters} />
+            <TableView
+              section={tableSection}
+              setSection={setTableSection}
+              data={data}
+              page={page}
+              total={total}
+              limit={limit}
+              setLimit={setLimit}
+              setPage={setPage}
+              fetchData={fetchData}
+              setSelectedIndividu={setSelectedIndividu}
+              activeFilters={activeFilters}
+            />
           ) : (
             <MapView mapData={mapData} getMarkerColor={getMarkerColor} onMarkerClick={handleMapMarkerClick} />
           )}
@@ -205,6 +245,30 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/add-user"
+        element={
+          <ProtectedRoute>
+            <AddUserPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/detail/:section/:id"
+        element={
+          <ProtectedRoute>
+            <DetailPage />
           </ProtectedRoute>
         }
       />
