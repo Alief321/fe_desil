@@ -320,7 +320,7 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
 
   loading && <Loading />;
   return (
-    <div className="h-full flex flex-col p-3 sm:p-6">
+    <div className="h-full w-full flex flex-col p-3 sm:p-6">
       {/* Export Button */}
       <div className="flex my-2 justify-end sticky top-0 z-30 bg-slate-50 p-2 sm:p-0">
         <button onClick={handleExportToExcel} className="flex gap-2 items-center cursor-pointer bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm sm:text-base">
