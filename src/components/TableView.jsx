@@ -115,7 +115,7 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
           id: 'detail',
           header: 'DETAIL',
           cell: (info) => (
-            <button type="button" onClick={() => handleShowDetail(info.row.original)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+            <button type="button" onClick={() => handleShowDetail(info.row.original)} className="cursor-pointer p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-all">
               <Eye size={16} />
             </button>
           ),
@@ -148,7 +148,7 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
         id: 'detail',
         header: 'DETAIL',
         cell: (info) => (
-          <button type="button" onClick={() => handleShowDetail(info.row.original)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+          <button type="button" onClick={() => handleShowDetail(info.row.original)} className="cursor-pointer p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
             <Eye size={16} />
           </button>
         ),
