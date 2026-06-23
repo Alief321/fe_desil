@@ -4,6 +4,7 @@ import { Eye, Search, ArrowUpDown, ArrowUp, ArrowDown, DownloadIcon } from 'luci
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { downloadCardPng, downloadCardsZip } from '../services/cardPrintService';
 import { Loading } from './Loading';
+import { getToken } from '../main';
 
 const TableView = ({ section = 'individu', setSection, data, page, total, limit, setLimit, setPage, fetchData, setSelectedIndividu, activeFilters = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,7 +250,7 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify({ filters: filterPayload }),
     })

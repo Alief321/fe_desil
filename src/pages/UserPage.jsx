@@ -3,29 +3,30 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { Edit, Eye, EyeOff, Trash2, X, Lock } from 'lucide-react';
-
-function getStoredUser() {
-  const raw = localStorage.getItem('user');
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch (error) {
-    return null;
-  }
-}
+import { getStoredUser } from '../services/getStoredUsers';
 
 export default function UserPage() {
   const navigate = useNavigate();
-  const user = getStoredUser();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', role: 'user', password: '' });
+
+  useEffect(() => {
+    async function loadAuth() {
+      const u = await getStoredUser();
+      setAuthUser(u);
+      setAuthLoading(false);
+    }
+    loadAuth();
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -45,13 +46,19 @@ export default function UserPage() {
   }, []);
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     document.cookie = 'token=; path=/; max-age=0';
     navigate('/login', { replace: true });
   };
 
-  if (!user || user.role !== 'admin') {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg" />
+      </div>
+    );
+  }
+
+  if (!authUser || authUser.role !== 'admin') {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header showViewToggle={false} showSidebarToggle={false} onLogout={logout} />

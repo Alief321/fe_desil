@@ -70,8 +70,6 @@ export default function DetailPage() {
         showViewToggle={false}
         showSidebarToggle={false}
         onLogout={() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
           document.cookie = 'token=; path=/; max-age=0';
           navigate('/login', { replace: true });
         }}

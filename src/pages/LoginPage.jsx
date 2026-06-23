@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff } from 'lucide-react';
+import { getToken } from '../main';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function LoginPage() {
   const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
-    if (localStorage.getItem('token')) {
+    if (getToken()) {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
@@ -33,10 +34,8 @@ export default function LoginPage() {
 
       const token = res.data.token;
       if (token) {
-        localStorage.setItem('token', token);
         document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`;
       }
-      localStorage.setItem('user', JSON.stringify(res.data.user));
 
       navigate(from, { replace: true });
     } catch (err) {

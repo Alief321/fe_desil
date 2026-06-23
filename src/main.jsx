@@ -5,12 +5,8 @@ import axios from 'axios';
 import './index.css';
 import App from './App.jsx';
 
-function getToken() {
-  const localToken = localStorage.getItem('token');
-  if (localToken) return localToken;
-
+export function getToken() {
   const cookieToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('token='));
-
   return cookieToken?.split('=')[1] || null;
 }
 

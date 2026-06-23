@@ -15,9 +15,6 @@ import DetailPage from './pages/DetailPage';
 import UserPage from './pages/UserPage';
 
 function getToken() {
-  const localToken = localStorage.getItem('token');
-  if (localToken) return localToken;
-
   const cookieToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('token='));
   return cookieToken?.split('=')[1] || null;
 }
@@ -34,8 +31,6 @@ function GeneralPageLayout({ children }) {
   const navigate = useNavigate();
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     document.cookie = 'token=; path=/; max-age=0';
     navigate('/login', { replace: true });
   };
@@ -64,8 +59,6 @@ function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     document.cookie = 'token=; path=/; max-age=0';
     navigate('/login', { replace: true });
   };
