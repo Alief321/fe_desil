@@ -19,7 +19,6 @@ function getToken() {
   if (localToken) return localToken;
 
   const cookieToken = document.cookie.split('; ').find((cookie) => cookie.startsWith('token='));
-
   return cookieToken?.split('=')[1] || null;
 }
 
@@ -28,7 +27,6 @@ function ProtectedRoute({ children }) {
   if (!getToken()) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
-
   return children;
 }
 
@@ -45,7 +43,7 @@ function GeneralPageLayout({ children }) {
   return (
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <Header showViewToggle={false} showSidebarToggle={false} onLogout={logout} />
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+      <main className="flex-1 overflow-auto p-3 sm:p-6">{children}</main>
     </div>
   );
 }
@@ -74,7 +72,6 @@ function Dashboard() {
 
   const getMarkerColor = (desil) => {
     const normalized = String(desil || '').trim();
-
     if (normalized === '1') return '#ef4444';
     if (normalized === '2') return '#f97316';
     if (normalized === '3') return '#f59e0b';
@@ -193,7 +190,7 @@ function Dashboard() {
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       <Header view={view} setView={setView} sidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={logout} />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <Sidebar
           activeFilters={activeFilters}
           tableSection={tableSection}
@@ -208,7 +205,7 @@ function Dashboard() {
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <main className="flex-1 relative">
+        <main className="flex-1 relative overflow-hidden">
           {view === 'table' ? (
             <TableView
               section={tableSection}
@@ -257,7 +254,7 @@ export default function App() {
         }
       />
       <Route
-        path="/add-user"
+        path="/user"
         element={
           <ProtectedRoute>
             <UserPage />
