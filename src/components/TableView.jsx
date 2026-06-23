@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Eye, Search, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Eye, Search, Download, ArrowUpDown, ArrowUp, ArrowDown, DownloadIcon } from 'lucide-react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { downloadCardPng, downloadCardsZip } from '../services/cardPrintService';
+import { Loading } from './Loading';
 
 const TableView = ({ section = 'individu', setSection, data, page, total, limit, setLimit, setPage, fetchData, setSelectedIndividu, activeFilters = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,6 +12,7 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const selectAllRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const getRowId = (row) => {
     if (!row) return null;
@@ -47,12 +49,26 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
     const ids = Array.from(new Set(selectedIds.filter(Boolean)));
     if (ids.length === 0) return;
 
-    console.log(ids);
-
     try {
-      await Promise.all(ids.map((id) => axios.patch(`${import.meta.env.VITE_API_URL}/eligible/${encodeURIComponent(id)}`, { isEligible: true, source: section })));
+      await Promise.all(
+        ids.map((id) => {
+          const row = data.find((d) => getRowId(d) === id);
+          if (!row) return null;
+
+          const current = row.isEligible ?? row['Status Eligible'];
+
+          const nextValue = !current;
+
+          return axios.patch(`${import.meta.env.VITE_API_URL}/eligible/${encodeURIComponent(id)}`, {
+            isEligible: nextValue,
+            source: section,
+          });
+        }),
+      );
+
       setSelectedIds([]);
       fetchData(page);
+
       alert(`Berhasil memperbarui eligible untuk ${ids.length} item.`);
     } catch (error) {
       console.error('Gagal memperbarui eligible', error);
@@ -251,36 +267,48 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // const handleExportToExcel = () => {
-  //   const filterPayload = {};
-  //   activeFilters.forEach((f) => {
-  //     if (!f.column || f.value === '' || f.value == null) return;
-  //     if (Array.isArray(f.value) && f.value.length === 0) return;
+  const handleExportToExcel = () => {
+    setLoading(true);
+    const exportEndpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/export` : `${import.meta.env.VITE_API_URL}/individu/export`;
+    const filterPayload = {};
+    activeFilters.forEach((f) => {
+      if (!f.column || f.value === '' || f.value == null) return;
+      if (Array.isArray(f.value) && f.value.length === 0) return;
 
-  //     if (f.column === 'umur' && typeof f.value === 'object' && f.value.min !== '' && f.value.max !== '') {
-  //       filterPayload[f.column] = [Number(f.value.min), Number(f.value.max)];
-  //       return;
-  //     }
+      if (f.column === 'umur' && typeof f.value === 'object' && f.value.min !== '' && f.value.max !== '') {
+        filterPayload[f.column] = [Number(f.value.min), Number(f.value.max)];
+        return;
+      }
 
-  //     if (Array.isArray(f.value)) {
-  //       filterPayload[f.column] = f.value;
-  //       return;
-  //     }
+      if (Array.isArray(f.value)) {
+        filterPayload[f.column] = f.value;
+        return;
+      }
 
-  //     filterPayload[f.column] = [f.value];
-  //   });
+      filterPayload[f.column] = [f.value];
+    });
 
-  //   const exportEndpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/export` : `${import.meta.env.VITE_API_URL}/individu/export`;
+    fetch(exportEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ filters: filterPayload }),
+    })
+      .then(async (res) => {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
 
-  //   axios
-  //     .post(exportEndpoint, { filters: filterPayload })
-  //     .then(() => {
-  //       // Export initiated by API call; response is handled by backend.
-  //     })
-  //     .catch((err) => {
-  //       console.error('Export API gagal', err);
-  //     });
-  // };
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = section + '.csv';
+        a.click();
+
+        window.URL.revokeObjectURL(url);
+      })
+      .finally(() => setLoading(false));
+  };
 
   const SortIcon = ({ column }) => {
     if (!column.getCanSort()) return null;
@@ -290,90 +318,112 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
     return isSorted === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
   };
 
+  loading && <Loading />;
   return (
-    <div className="h-full flex flex-col p-6">
+    <div className="h-full flex flex-col p-3 sm:p-6">
+      {/* Export Button */}
+      <div className="flex my-2 justify-end sticky top-0 z-30 bg-slate-50 p-2 sm:p-0">
+        <button onClick={handleExportToExcel} className="flex gap-2 items-center cursor-pointer bg-green-600 hover:bg-green-700 text-white rounded-xl px-4 py-2 text-sm sm:text-base">
+          <DownloadIcon size={18} /> Export
+        </button>
+      </div>
+
       <div className="flex-1 bg-white rounded-2xl shadow-sm border overflow-hidden flex flex-col">
         {/* Search Bar & Actions */}
-        <div className="p-4 border-b bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="p-3 sm:p-4 border-b bg-slate-50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search */}
           <div className="flex-1 relative">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Cari data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
+
+          {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <div className="flex items-center gap-3">
-              <select value={section} onChange={(e) => setSection(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
-                <option value="individu">Individu</option>
-                <option value="keluarga">Keluarga</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <select value={section} onChange={(e) => setSection(e.target.value)} className="border rounded-lg px-3 py-2 text-sm bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
+              <option value="individu">Individu</option>
+              <option value="keluarga">Keluarga</option>
+            </select>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               {selectedIds.length > 0 && (
                 <>
-                  <button onClick={handleSetSelectedEligible} disabled={selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    Tandai Eligible
+                  <button
+                    onClick={handleSetSelectedEligible}
+                    disabled={selectedIds.length === 0}
+                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Ubah Status Eligible
                   </button>
+
                   <button
                     onClick={handleDownloadSelectedCards}
                     disabled={selectedIds.length === 0 || bulkDownloading}
-                    className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full sm:w-auto px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {bulkDownloading ? 'Mengunduh...' : `Unduh ${selectedIds.length} kartu`}
                   </button>
                 </>
               )}
-              <div className="text-slate-500 text-sm font-semibold">{selectedIds.length > 0 ? `${selectedIds.length} item terpilih` : 'Tidak ada item terpilih'}</div>
+              <div className="text-slate-500 text-sm font-semibold text-center sm:text-left">{selectedIds.length > 0 ? `${selectedIds.length} item terpilih` : 'Tidak ada item terpilih'}</div>
             </div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-auto flex-1">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 border-b sticky top-0 z-20">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  <th className="px-6 py-4">
-                    <input type="checkbox" ref={selectAllRef} checked={allVisibleSelected} onChange={toggleSelectAllVisible} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
-                  </th>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      onClick={header.column.getToggleSortingHandler()}
-                      className={`px-6 py-4 text-slate-500 font-bold ${header.column.getCanSort() ? 'cursor-pointer hover:bg-slate-100' : ''} ${header.id === 'detail' ? 'text-center' : ''}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getCanSort() && <SortIcon column={header.column} />}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="divide-y">
-              {table.getRowModel().rows.map((row) => {
-                const rowId = getRowId(row.original);
-                const isSelected = rowId && selectedIds.includes(rowId);
+        {/* Mobile hint */}
+        <div className="block sm:hidden text-xs text-slate-400 px-4 py-1">Geser ke samping untuk melihat kolom →</div>
 
-                return (
-                  <tr key={row.id} className={` transition-colors ${row.original['Status Eligible'] ? 'bg-green-300 hover:bg-green-400' : 'hover:bg-slate-50'}`}>
-                    <td className="px-6 py-4">
-                      <input type="checkbox" checked={Boolean(isSelected)} onChange={() => toggleRowSelection(rowId)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
-                    </td>
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className={cell.column.id === 'detail' ? 'px-6 py-4 text-center' : 'px-6 py-4'}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
+        {/* Table */}
+        <div className="overflow-x-auto overflow-y-auto flex-1 relative">
+          <div className="min-w-[900px]">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 border-b sticky top-0 z-20">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    <th className="px-3 py-2 sm:px-6 sm:py-4">
+                      <input type="checkbox" ref={selectAllRef} checked={allVisibleSelected} onChange={toggleSelectAllVisible} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                    </th>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        onClick={header.column.getToggleSortingHandler()}
+                        className={`px-3 py-2 sm:px-6 sm:py-4 text-slate-500 font-bold ${header.column.getCanSort() ? 'cursor-pointer hover:bg-slate-100' : ''} ${header.id === 'detail' ? 'text-center' : ''}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                          {header.column.getCanSort() && <SortIcon column={header.column} />}
+                        </div>
+                      </th>
                     ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ))}
+              </thead>
+
+              <tbody className="divide-y">
+                {table.getRowModel().rows.map((row) => {
+                  const rowId = getRowId(row.original);
+                  const isSelected = rowId && selectedIds.includes(rowId);
+
+                  return (
+                    <tr key={row.id} className={`transition-colors ${row.original['Status Eligible'] ? 'bg-green-300 hover:bg-green-400' : 'hover:bg-slate-50'}`}>
+                      <td className="px-3 py-2 sm:px-6 sm:py-4">
+                        <input type="checkbox" checked={Boolean(isSelected)} onChange={() => toggleRowSelection(rowId)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                      </td>
+
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className={cell.column.id === 'detail' ? 'px-3 py-2 sm:px-6 sm:py-4 text-center' : 'px-3 py-2 sm:px-6 sm:py-4'}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Pagination */}
-        <div className="p-4 border-t flex justify-between items-center text-xs font-bold text-slate-500">
+        <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center text-xs font-bold text-slate-500">
           <button
             onClick={() => {
               const currentSort = mapSort(sorting);
@@ -386,12 +436,12 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
               });
             }}
             disabled={page === 1}
-            className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+            className="w-full sm:w-auto px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
           >
             Prev
           </button>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-col sm:flex-row gap-2 items-center">
             <select value={limit} onChange={(e) => handleLimitChange(Number(e.target.value))} className="border rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">
               <option value={10}>10 / halaman</option>
               <option value={25}>25 / halaman</option>
@@ -401,10 +451,12 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
               <option value={500}>500 / halaman</option>
               <option value={1000}>1000 / halaman</option>
             </select>
-            <span>
+
+            <span className="text-center">
               HALAMAN {page} / {Math.ceil(total / limit)} ({total} DATA)
             </span>
           </div>
+
           <button
             onClick={() => {
               const currentSort = mapSort(sorting);
@@ -417,7 +469,7 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
               });
             }}
             disabled={page * limit >= total}
-            className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+            className="w-full sm:w-auto px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
           >
             Next
           </button>

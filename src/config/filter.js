@@ -48,8 +48,6 @@ export const masterColumnAliases = {
 
   // DEMOGRAFI INDIVIDU
   'Status Keberadaan Individu': 'STATUS KEBERADAAN INDIVIDU',
-  'Tempat Lahir': 'TEMPAT LAHIR',
-  'Tanggal Lahir': 'TANGGAL LAHIR',
   umur: 'UMUR',
   'Jenis Kelamin': 'JENIS KELAMIN',
   'Status Perkawinan': 'STATUS PERKAWINAN',
@@ -66,19 +64,17 @@ export const masterColumnAliases = {
   // PEKERJAAN & PENDAPATAN INDIVIDU
   'bekerja minimal selama 1 jam selama satu minggu terakhir?': 'STATUS BEKERJA SEMINGGU TERAKHIR',
   'Seluruh Pekerjaan yang Dilakukan Selama Sebulan Terakhir': 'SELURUH PEKERJAAN SEBULAN',
-  'Lapangan Usaha dari Pekerjaan Utama': 'LAPANGAN USAHA UTAMA',
-  'Detail apa yang dikerjakan Saudara_i di tempat kerja utama': 'DETAIL PEKERJAAN UTAMA',
-  'komoditas utama dari tempat bekerja utama': 'KOMODITAS UTAMA',
+  'Lapangan Usaha dari Pekerjaan Utama': 'LAPANGAN USAHA PEKERJAAN UTAMA',
   'Tuliskan bidang usaha tempat bekerja utama': 'BIDANG USAHA UTAMA',
   'Apakah status pekerjaan Saudara_i pada pekerjaan ini?': 'STATUS PEKERJAAN',
   'total pendapatan selama sebulan terakhir': 'TOTAL PENDAPATAN SEBULAN',
-  'Berapakah total pemasukan transfer dari rumah tangga lain?': 'TOTAL TRANSFER MASUK',
+  'Berapakah total pemasukan transfer dari rumah tangga lain?': 'TOTAL TRANSFER MASUK DARI RUTA LAIN',
   'Keterampilan Khusus_Sertifikat Keahlian': 'SERTIFIKAT KEAHLIAN',
 
   // USAHA INDIVIDU
-  'Kepemilikan Usaha Sendiri_Bersama': 'MEMILIKI USAHA',
+  'Kepemilikan Usaha Sendiri_Bersama': 'MEMILIKI USAHA SENDIRI/BERSAMA',
   'Jumlah Usaha Sendiri_Bersama yang Dimiliki': 'JUMLAH USAHA',
-  'Lapangan Usaha dari Usaha Utama': 'LAPANGAN USAHA UTAMA',
+  'Lapangan Usaha dari Usaha Utama': 'LAPANGAN USAHA USAHA UTAMA',
   'Jumlah Pekerja yang Dibayar pada Usaha Utama': 'PEKERJA DIBAYAR',
   'Jumlah Pekerja yang Tidak Dibayar pada Usaha Utama': 'PEKERJA TIDAK DIBAYAR',
   'Omzet Usaha Utama Per Bulan Rumah': 'OMZET USAHA SEBULAN',
@@ -139,8 +135,6 @@ export const masterFilterColumns = [
   'Kepemilikan Kambing atau Domba',
 
   // DEMOGRAFI INDIVIDU
-  'Tempat Lahir',
-  'Tanggal Lahir',
   'umur',
   'Jenis Kelamin',
   'Status Perkawinan',
@@ -158,8 +152,6 @@ export const masterFilterColumns = [
   'bekerja minimal selama 1 jam selama satu minggu terakhir?',
   'Seluruh Pekerjaan yang Dilakukan Selama Sebulan Terakhir',
   'Lapangan Usaha dari Pekerjaan Utama',
-  'Detail apa yang dikerjakan Saudara_i di tempat kerja utama',
-  'komoditas utama dari tempat bekerja utama',
   'Tuliskan bidang usaha tempat bekerja utama',
   'Apakah status pekerjaan Saudara_i pada pekerjaan ini?',
   'total pendapatan selama sebulan terakhir',

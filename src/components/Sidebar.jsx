@@ -110,31 +110,64 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                               </span>
                             </div>
 
-                            <input
-                              type="range"
-                              min={umurMin}
-                              max={umurMax}
-                              value={safeMin}
-                              onChange={(e) =>
-                                updateFilter(idx, 'value', {
-                                  min: Number(e.target.value),
-                                  max: safeMax,
-                                })
-                              }
-                            />
+                            <div className="w-full flex items-center text-center gap-4">
+                              <input
+                                type="range"
+                                className="w-4/5"
+                                min={umurMin}
+                                max={umurMax}
+                                value={safeMin}
+                                onChange={(e) =>
+                                  updateFilter(idx, 'value', {
+                                    min: Number(e.target.value),
+                                    max: safeMax,
+                                  })
+                                }
+                              />
+                              <input
+                                className="w-1/5 bg-white rounded-lg border-gray-500 border "
+                                type="number"
+                                name="min"
+                                id="min"
+                                value={safeMin}
+                                onChange={(e) =>
+                                  updateFilter(idx, 'value', {
+                                    min: Number(e.target.value),
+                                    max: safeMax,
+                                  })
+                                }
+                              />
+                            </div>
 
-                            <input
-                              type="range"
-                              min={umurMin}
-                              max={umurMax}
-                              value={safeMax}
-                              onChange={(e) =>
-                                updateFilter(idx, 'value', {
-                                  min: safeMin,
-                                  max: Number(e.target.value),
-                                })
-                              }
-                            />
+                            <div className="w-full flex items-center text-center gap-4 ">
+                              <input
+                                className="w-4/5"
+                                type="range"
+                                min={umurMin}
+                                max={umurMax}
+                                value={safeMax}
+                                onChange={(e) =>
+                                  updateFilter(idx, 'value', {
+                                    min: safeMin,
+                                    max: Number(e.target.value),
+                                  })
+                                }
+                              />
+
+                              <input
+                                className="w-1/5 bg-white rounded-lg border-gray-500 border "
+                                type="number"
+                                name="max"
+                                id="max"
+                                value={safeMax}
+                                onChange={(e) =>
+                                  updateFilter(idx, 'value', {
+                                    min: safeMin,
+                                    max: Number(e.target.value),
+                                  })
+                                }
+                              />
+                            </div>
                           </div>
                         ) : f.column === 'desa_kelurahan' && !hasKecamatan ? (
                           <div className="rounded-xl border border-dashed p-4 text-sm text-slate-600">Pilih kecamatan terlebih dahulu agar desa/kelurahan dapat dipilih.</div>

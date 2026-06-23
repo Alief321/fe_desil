@@ -95,9 +95,13 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
                 if (!id) return;
                 try {
                   setUpdatingEligible(true);
-                  await axios.patch(`${import.meta.env.VITE_API_URL}/eligible/${encodeURIComponent(id)}`, { eligible: true });
+                  await axios.patch(`${import.meta.env.VITE_API_URL}/eligible/${encodeURIComponent(id)}`, {
+                    id: id,
+                    source: selectedIndividu['Nama Lengkap Individu'] ? 'individu' : 'keluarga',
+                    isEligible: !selectedIndividu['Status Eligible'],
+                  });
                   alert('Status eligible berhasil diperbarui.');
-                  setSelectedIndividu({ ...selectedIndividu, eligible: true });
+                  setSelectedIndividu({ ...selectedIndividu, eligible: !selectedIndividu });
                 } catch (error) {
                   console.error('Gagal ubah eligible', error);
                   alert('Gagal memperbarui eligible. Silakan coba lagi.');
@@ -171,6 +175,25 @@ const DetailModal = ({ selectedIndividu, setSelectedIndividu }) => {
                     );
                   }
 
+                  if (key === 'anggota' && Array.isArray(value)) {
+                    return (
+                      <div key={key} className="p-5">
+                        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Anggota Keluarga</p>
+
+                        <div className="mt-3 space-y-2">
+                          {value.map((item, idx) => (
+                            <div key={idx} className="border p-3 rounded">
+                              {/* ✔️ render fieldnya */}
+                              <p className="font-bold">{item['Nama Lengkap Individu']}</p>
+
+                              <p className="text-xs text-slate-500">Status: {item['Status Hubungan dengan Kepala Keluarga']}</p>
+                              <p className="text-xs text-slate-500">NIK: {item['Nomor KTP/NIK']}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
                   if (key === 'lokasi' && typeof value === 'string') {
                     return (
                       // arahkan link ke Google Maps dengan query lokasi
