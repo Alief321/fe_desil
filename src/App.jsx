@@ -86,11 +86,6 @@ function Dashboard() {
           if (!f.column || f.value === '' || f.value == null) return;
           if (Array.isArray(f.value) && f.value.length === 0) return;
 
-          if (f.column === 'umur' && typeof f.value === 'object' && f.value.min !== '' && f.value.max !== '') {
-            filterPayload[f.column] = [Number(f.value.min), Number(f.value.max)];
-            return;
-          }
-
           if (Array.isArray(f.value)) {
             filterPayload[f.column] = f.value;
             return;
