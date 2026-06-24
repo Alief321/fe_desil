@@ -2,11 +2,23 @@ import { ChevronDown, Filter, Plus, X } from 'lucide-react';
 import Select from 'react-select';
 import { masterFilterColumns, getFilterLabel, getFilterLabelKeluarga } from '../config/filter';
 import { useState } from 'react';
+
 const extractPrefix = (value) => {
   const raw = String(value || '');
   const digits = raw.match(/\d/g)?.join('') || '';
   return digits.length >= 7 ? digits.slice(0, 7) : raw.slice(0, 7);
 };
+
+// Daftar kolom yang menggunakan filter rentang nilai (slider min-max)
+const RANGE_COLUMNS = [
+  'umur',
+  'Luas Lantai Bangunan Tempat Tinggal (m2)',
+  'Kepemilikan  Lahan (selain yang ditempati) (m2)',
+  'Kepemilikan  Rumah_bangunan di tempat lain (m2)',
+  'luas_lantai_bangunan_tempat_tinggal_m2',
+  'kepemilikan_lahan_selain_yang_ditempati_m2',
+  'kepemilikan_rumah_bangunan_di_tempat_lain_m2',
+];
 
 const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, removeFilter, updateFilter, fetchOptions, fetchData, loading, isOpen }) => {
   const hasKecamatan = activeFilters.some((filter) => filter.column === 'kecamatan' && Array.isArray(filter.value) && filter.value.length > 0);
@@ -38,13 +50,19 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
 
         <div className="space-y-3 pr-2">
           {activeFilters.map((f, idx) => {
+            const isRangeColumn = RANGE_COLUMNS.includes(f.column);
             const optionValues = f.column === 'desa_kelurahan' ? getDesaOptions() : columnOptions[f.column] || [];
             const selectedValues = Array.isArray(f.value) ? f.value : f.value ? [f.value] : [];
-            const umurOptions = (columnOptions.umur || []).map((opt) => Number(opt)).filter((value) => !Number.isNaN(value));
-            const umurMin = umurOptions.length ? Math.min(...umurOptions) : 0;
-            const umurMax = umurOptions.length ? Math.max(...umurOptions) : 100;
-            const currentMin = f.value?.min != null ? Number(f.value.min) : umurMin;
-            const currentMax = f.value?.max != null ? Number(f.value.max) : umurMax;
+
+            // Logika min-max disatukan untuk semua RANGE_COLUMNS
+            const rangeOptions = isRangeColumn ? (columnOptions[f.column] || []).map(Number).filter((v) => !Number.isNaN(v)) : [];
+            const rangeMin = rangeOptions.length ? Math.min(...rangeOptions) : 0;
+            const rangeMax = rangeOptions.length ? Math.max(...rangeOptions) : 100;
+
+            // Membaca array [min, max] dari filter value
+            const currentMin = Array.isArray(f.value) && f.value[0] != null ? Number(f.value[0]) : rangeMin;
+            const currentMax = Array.isArray(f.value) && f.value[1] != null ? Number(f.value[1]) : rangeMax;
+
             const safeMin = Math.min(currentMin, currentMax);
             const safeMax = Math.max(currentMin, currentMax);
 
@@ -78,7 +96,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                       className="w-full text-xs font-bold mb-2"
                       options={masterFilterColumns.map((c) => ({
                         value: c,
-                        label: tableSection === 'individu' ? getFilterLabel(c) : tableSection === 'keluarga' ? getFilterLabelKeluarga(c) : c === 'umur' ? 'Umur' : c === 'desa_kelurahan' ? 'Desa/Kelurahan' : c,
+                        label: tableSection === 'individu' ? getFilterLabel(c) : tableSection === 'keluarga' ? getFilterLabelKeluarga(c) : RANGE_COLUMNS.includes(c) ? c : c === 'desa_kelurahan' ? 'Desa/Kelurahan' : c,
                         isDisabled: c === 'desa_kelurahan' && !hasKecamatan,
                       }))}
                       value={
@@ -101,79 +119,30 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
 
                     {f.column && (
                       <div>
-                        {f.column === 'umur' ? (
+                        {isRangeColumn ? (
                           <div className="space-y-4">
                             <div className="flex justify-between text-sm text-slate-700">
-                              <span>Rentang Umur</span>
+                              <span>Rentang Nilai</span>
                               <span className="font-semibold">
                                 {safeMin} - {safeMax}
                               </span>
                             </div>
 
                             <div className="w-full flex items-center text-center gap-4">
-                              <input
-                                type="range"
-                                className="w-4/5"
-                                min={umurMin}
-                                max={umurMax}
-                                value={safeMin}
-                                onChange={(e) =>
-                                  updateFilter(idx, 'value', {
-                                    min: Number(e.target.value),
-                                    max: safeMax,
-                                  })
-                                }
-                              />
-                              <input
-                                className="w-1/5 bg-white rounded-lg border-gray-500 border "
-                                type="number"
-                                name="min"
-                                id="min"
-                                value={safeMin}
-                                onChange={(e) =>
-                                  updateFilter(idx, 'value', {
-                                    min: Number(e.target.value),
-                                    max: safeMax,
-                                  })
-                                }
-                              />
+                              <input type="range" className="w-4/5" min={rangeMin} max={rangeMax} value={safeMin} onChange={(e) => updateFilter(idx, 'value', [Number(e.target.value), safeMax])} />
+                              <input className="w-1/5 bg-white rounded-lg border-gray-500 border p-1 text-center" type="number" value={safeMin} onChange={(e) => updateFilter(idx, 'value', [Number(e.target.value), safeMax])} />
                             </div>
 
-                            <div className="w-full flex items-center text-center gap-4 ">
-                              <input
-                                className="w-4/5"
-                                type="range"
-                                min={umurMin}
-                                max={umurMax}
-                                value={safeMax}
-                                onChange={(e) =>
-                                  updateFilter(idx, 'value', {
-                                    min: safeMin,
-                                    max: Number(e.target.value),
-                                  })
-                                }
-                              />
-
-                              <input
-                                className="w-1/5 bg-white rounded-lg border-gray-500 border "
-                                type="number"
-                                name="max"
-                                id="max"
-                                value={safeMax}
-                                onChange={(e) =>
-                                  updateFilter(idx, 'value', {
-                                    min: safeMin,
-                                    max: Number(e.target.value),
-                                  })
-                                }
-                              />
+                            <div className="w-full flex items-center text-center gap-4">
+                              <input className="w-4/5" type="range" min={rangeMin} max={rangeMax} value={safeMax} onChange={(e) => updateFilter(idx, 'value', [safeMin, Number(e.target.value)])} />
+                              <input className="w-1/5 bg-white rounded-lg border-gray-500 border p-1 text-center" type="number" value={safeMax} onChange={(e) => updateFilter(idx, 'value', [safeMin, Number(e.target.value)])} />
                             </div>
                           </div>
                         ) : f.column === 'desa_kelurahan' && !hasKecamatan ? (
                           <div className="rounded-xl border border-dashed p-4 text-sm text-slate-600">Pilih kecamatan terlebih dahulu agar desa/kelurahan dapat dipilih.</div>
                         ) : f.column === 'Status Eligible' ? (
                           <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm">
+                            <label className="flex items-center gap-2 text-sm cursor-pointer">
                               <input
                                 type="checkbox"
                                 checked={selectedValues.includes(true)}
@@ -189,7 +158,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                               const isChecked = selectedValues.includes(value);
 
                               return (
-                                <label key={value} className="flex items-center gap-2 text-sm">
+                                <label key={value} className="flex items-center gap-2 text-sm cursor-pointer">
                                   <input
                                     type="checkbox"
                                     checked={isChecked}
