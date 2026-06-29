@@ -1,4 +1,4 @@
-import { ChevronDown, Filter, Plus, X, Layers, Search } from 'lucide-react';
+import { ChevronDown, Filter, X, Layers, Search } from 'lucide-react';
 import Select from 'react-select';
 import { masterFilterColumns, getFilterLabel, getFilterLabelKeluarga, keluargaColumnsAliases } from '../config/filter';
 import { useState } from 'react';
@@ -48,16 +48,42 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
   return (
     <aside className={`bg-white/80 backdrop-blur-xl border-r border-white/40 flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.02)] transition-all duration-300 z-10 ${isOpen ? 'w-80 h-auto overflow-auto ' : 'w-0 overflow-hidden opacity-0'}`}>
       <div className="p-6">
-        <div className="flex items-center justify-between pb-5 sticky top-0 bg-white/80 backdrop-blur-md z-20 border-b border-slate-100/50 mb-4">
-          <h2 className="font-extrabold text-slate-800 flex items-center gap-2.5 text-lg">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-              <Filter size={18} strokeWidth={2.5} />
-            </div>
-            Filter Data
-          </h2>
-          <button onClick={addFilter} className="flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 p-1.5 rounded-full transition-all hover:scale-105 active:scale-95">
-            <Plus size={18} strokeWidth={3} />
-          </button>
+        <div className="flex flex-col gap-4 pb-5 sticky top-0 bg-white/80 backdrop-blur-md z-20 border-b border-slate-100/50 mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-extrabold text-slate-800 flex items-center gap-2.5 text-lg">
+              <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                <Filter size={18} strokeWidth={2.5} />
+              </div>
+              Filter Data
+            </h2>
+          </div>
+
+          <Select
+            className="w-full text-sm font-bold shadow-sm rounded-xl"
+            options={currentAvailableColumns
+              .filter((c) => !activeFilters.some((f) => f.column === c))
+              .map((c) => ({
+                value: c,
+                label: tableSection === 'individu' ? getFilterLabel(c) : tableSection === 'keluarga' ? getFilterLabelKeluarga(c) : RANGE_COLUMNS.includes(c) ? c : c === 'desa_kelurahan' ? 'Desa/Kelurahan' : c,
+                isDisabled: c === 'desa_kelurahan' && !hasKecamatan,
+              }))}
+            value={null}
+            onChange={(opt) => {
+              if (opt) {
+                addFilter(opt.value);
+                setOpenIndex(activeFilters.length);
+              }
+            }}
+            placeholder="🔍 Cari & Tambah Filter..."
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            styles={{
+              control: (base) => ({ ...base, borderRadius: '0.75rem', borderColor: '#e2e8f0', padding: '2px', cursor: 'pointer' }),
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+              placeholder: (base) => ({ ...base, color: '#64748b', fontWeight: '600' }),
+            }}
+            isSearchable
+          />
         </div>
 
         <div className="space-y-3.5 pr-1">
@@ -83,7 +109,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                   <div className="flex items-center gap-2.5">
                     <Layers size={14} className={`${openIndex === idx ? 'text-blue-500' : 'text-slate-400 group-hover:text-blue-400'} transition-colors`} />
                     <div className={`text-[13px] font-bold ${openIndex === idx ? 'text-blue-700' : 'text-slate-600 group-hover:text-slate-800'}`}>
-                      {f.column ? (tableSection === 'individu' ? getFilterLabel(f.column) : tableSection === 'keluarga' ? getFilterLabelKeluarga(f.column) : f.column) : 'Pilih Parameter'}
+                      {f.column ? (tableSection === 'individu' ? getFilterLabel(f.column) : tableSection === 'keluarga' ? getFilterLabelKeluarga(f.column) : f.column) : 'Memuat...'}
                     </div>
                   </div>
 
@@ -108,34 +134,8 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                 <div className={`grid transition-all duration-300 ease-in-out ${openIndex === idx ? 'grid-rows-[1fr] opacity-100 border-t border-slate-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden">
                     <div className="p-3.5 bg-slate-50/50">
-                      <Select
-                        className="w-full text-xs font-bold mb-3 shadow-sm rounded-xl"
-                        options={currentAvailableColumns.map((c) => ({
-                          value: c,
-                          label: tableSection === 'individu' ? getFilterLabel(c) : tableSection === 'keluarga' ? getFilterLabelKeluarga(c) : RANGE_COLUMNS.includes(c) ? c : c === 'desa_kelurahan' ? 'Desa/Kelurahan' : c,
-                          isDisabled: c === 'desa_kelurahan' && !hasKecamatan,
-                        }))}
-                        value={
-                          f.column
-                            ? {
-                                value: f.column,
-                                label: tableSection === 'individu' ? getFilterLabel(f.column) : tableSection === 'keluarga' ? getFilterLabelKeluarga(f.column) : f.column,
-                              }
-                            : null
-                        }
-                        onChange={(opt) => fetchOptions(idx, opt?.value)}
-                        placeholder="Pilih Parameter..."
-                        menuPortalTarget={document.body}
-                        menuPosition="fixed"
-                        styles={{
-                          control: (base) => ({ ...base, borderRadius: '0.75rem', borderColor: '#e2e8f0', padding: '2px' }),
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        isClearable
-                      />
-
                       {f.column && (
-                        <div className="mt-2">
+                        <div>
                           {isRangeColumn ? (
                             <div className="space-y-4 bg-white p-3 border border-slate-100 rounded-xl shadow-sm">
                               <div className="flex justify-between items-center text-xs">

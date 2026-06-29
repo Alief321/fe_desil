@@ -164,7 +164,13 @@ function Dashboard() {
     }
   };
 
-  const addFilter = () => setActiveFilters([...activeFilters, { column: '', value: '' }]);
+  const addFilter = async (columnName) => {
+    const newIndex = activeFilters.length;
+    setActiveFilters([...activeFilters, { column: typeof columnName === 'string' ? columnName : '', value: '' }]);
+    if (typeof columnName === 'string') {
+      await fetchOptions(newIndex, columnName);
+    }
+  };
   const removeFilter = (index) => {
     const newFilters = [...activeFilters];
     newFilters.splice(index, 1);
