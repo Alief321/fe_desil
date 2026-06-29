@@ -85,6 +85,22 @@ function Dashboard() {
         activeFilters.forEach((f) => {
           if (!f.column || f.value === '' || f.value == null) return;
           if (Array.isArray(f.value) && f.value.length === 0) return;
+          if (typeof f.value === 'object' && !Array.isArray(f.value) && f.value.min === '' && f.value.max === '') return;
+
+          const RANGE_COLUMNS = [
+            'umur',
+            'Luas Lantai Bangunan Tempat Tinggal (m2)',
+            'Kepemilikan  Lahan (selain yang ditempati) (m2)',
+            'Kepemilikan  Rumah_bangunan di tempat lain (m2)',
+            'luas_lantai_bangunan_tempat_tinggal_m2',
+            'kepemilikan_lahan_selain_yang_ditempati_m2',
+            'kepemilikan_rumah_bangunan_di_tempat_lain_m2',
+          ];
+
+          if (RANGE_COLUMNS.includes(f.column) && Array.isArray(f.value) && f.value.length === 2) {
+            filterPayload[f.column] = { min: f.value[0], max: f.value[1] };
+            return;
+          }
 
           if (Array.isArray(f.value)) {
             filterPayload[f.column] = f.value;

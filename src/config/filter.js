@@ -48,7 +48,7 @@ export const masterColumnAliases = {
 
   // DEMOGRAFI INDIVIDU
   'Status Keberadaan Individu': 'STATUS KEBERADAAN INDIVIDU',
-  umur: 'UMUR',
+  umur: 'USIA (UMUR)',
   'Jenis Kelamin': 'JENIS KELAMIN',
   'Status Perkawinan': 'STATUS PERKAWINAN',
   'Status Hubungan dengan Kepala Keluarga': 'HUBUNGAN DENGAN KK',

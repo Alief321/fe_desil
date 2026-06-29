@@ -236,13 +236,31 @@ const TableView = ({ section = 'individu', setSection, data, page, total, limit,
     setLoading(true);
     const exportEndpoint = section === 'keluarga' ? `${import.meta.env.VITE_API_URL}/keluarga/export` : `${import.meta.env.VITE_API_URL}/individu/export`;
     const filterPayload = {};
+    const RANGE_COLUMNS = [
+      'umur',
+      'Luas Lantai Bangunan Tempat Tinggal (m2)',
+      'Kepemilikan  Lahan (selain yang ditempati) (m2)',
+      'Kepemilikan  Rumah_bangunan di tempat lain (m2)',
+      'luas_lantai_bangunan_tempat_tinggal_m2',
+      'kepemilikan_lahan_selain_yang_ditempati_m2',
+      'kepemilikan_rumah_bangunan_di_tempat_lain_m2',
+    ];
+
     activeFilters.forEach((f) => {
       if (!f.column || f.value === '' || f.value == null) return;
       if (Array.isArray(f.value) && f.value.length === 0) return;
-      if (f.column === 'umur' && typeof f.value === 'object' && f.value.min !== '' && f.value.max !== '') {
-        filterPayload[f.column] = [Number(f.value.min), Number(f.value.max)];
-        return;
+      if (typeof f.value === 'object' && !Array.isArray(f.value) && f.value.min === '' && f.value.max === '') return;
+      
+      if (RANGE_COLUMNS.includes(f.column)) {
+        if (Array.isArray(f.value) && f.value.length === 2) {
+          filterPayload[f.column] = { min: Number(f.value[0]), max: Number(f.value[1]) };
+          return;
+        } else if (typeof f.value === 'object' && !Array.isArray(f.value) && f.value.min !== '' && f.value.max !== '') {
+          filterPayload[f.column] = { min: Number(f.value.min), max: Number(f.value.max) };
+          return;
+        }
       }
+
       filterPayload[f.column] = Array.isArray(f.value) ? f.value : [f.value];
     });
 
