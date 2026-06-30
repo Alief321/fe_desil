@@ -85,6 +85,22 @@ function Dashboard() {
         activeFilters.forEach((f) => {
           if (!f.column || f.value === '' || f.value == null) return;
           if (Array.isArray(f.value) && f.value.length === 0) return;
+          if (typeof f.value === 'object' && !Array.isArray(f.value) && f.value.min === '' && f.value.max === '') return;
+
+          const RANGE_COLUMNS = [
+            'umur',
+            'Luas Lantai Bangunan Tempat Tinggal (m2)',
+            'Kepemilikan  Lahan (selain yang ditempati) (m2)',
+            'Kepemilikan  Rumah_bangunan di tempat lain (m2)',
+            'luas_lantai_bangunan_tempat_tinggal_m2',
+            'kepemilikan_lahan_selain_yang_ditempati_m2',
+            'kepemilikan_rumah_bangunan_di_tempat_lain_m2',
+          ];
+
+          if (RANGE_COLUMNS.includes(f.column) && Array.isArray(f.value) && f.value.length === 2) {
+            filterPayload[f.column] = { min: f.value[0], max: f.value[1] };
+            return;
+          }
 
           if (Array.isArray(f.value)) {
             filterPayload[f.column] = f.value;
@@ -148,7 +164,13 @@ function Dashboard() {
     }
   };
 
-  const addFilter = () => setActiveFilters([...activeFilters, { column: '', value: '' }]);
+  const addFilter = async (columnName) => {
+    const newIndex = activeFilters.length;
+    setActiveFilters([...activeFilters, { column: typeof columnName === 'string' ? columnName : '', value: '' }]);
+    if (typeof columnName === 'string') {
+      await fetchOptions(newIndex, columnName);
+    }
+  };
   const removeFilter = (index) => {
     const newFilters = [...activeFilters];
     newFilters.splice(index, 1);
@@ -179,6 +201,8 @@ function Dashboard() {
       <Header view={view} setView={setView} sidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={logout} />
 
       <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile Backdrop */}
+        {sidebarOpen && <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
         <Sidebar
           activeFilters={activeFilters}
           tableSection={tableSection}
@@ -197,7 +221,11 @@ function Dashboard() {
           {view === 'table' ? (
             <TableView
               section={tableSection}
-              setSection={setTableSection}
+              setSection={(newSection) => {
+                setTableSection(newSection);
+                setActiveFilters([]);
+                setPage(1);
+              }}
               data={data}
               page={page}
               total={total}

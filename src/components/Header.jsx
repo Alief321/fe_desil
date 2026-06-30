@@ -49,8 +49,8 @@ const Header = ({ view, setView, sidebarOpen, toggleSidebar, onLogout, showViewT
         </div>
 
         <Link to="/dashboard">
-          <h1 className="text-base sm:text-xl font-black text-slate-800 uppercase">
-            VIVA<span className="text-blue-600">DTSEN</span>
+          <h1 className="text-base sm:text-xl font-black text-blue-700 uppercase">
+            VIVA<span className="text-orange-500">DTSEN</span>
           </h1>
         </Link>
       </div>
@@ -59,10 +59,10 @@ const Header = ({ view, setView, sidebarOpen, toggleSidebar, onLogout, showViewT
       <div className="flex items-center gap-3 relative" ref={menuRef}>
         {showViewToggle && (
           <div className="flex bg-slate-100 p-1 rounded-xl border">
-            <button onClick={() => setView('table')} className={`px-3 py-1.5 rounded-lg ${view === 'table' ? 'bg-white text-blue-600 shadow' : 'text-slate-500'}`}>
+            <button onClick={() => setView('table')} className={`px-3 py-1.5 rounded-lg ${view === 'table' ? 'bg-white text-orange-600 shadow' : 'text-slate-500'}`}>
               <TableIcon size={16} />
             </button>
-            <button onClick={() => setView('map')} className={`px-3 py-1.5 rounded-lg ${view === 'map' ? 'bg-white text-blue-600 shadow' : 'text-slate-500'}`}>
+            <button onClick={() => setView('map')} className={`px-3 py-1.5 rounded-lg ${view === 'map' ? 'bg-white text-orange-600 shadow' : 'text-slate-500'}`}>
               <Map size={16} />
             </button>
           </div>
