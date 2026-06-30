@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, Landmark } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, PieChart } from 'lucide-react';
 import { getToken } from '../main';
 
 export default function LoginPage() {
@@ -48,18 +48,18 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-slate-50 overflow-hidden font-sans">
       {/* Abstract Background Orbs */}
-      <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-400/30 blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-teal-500/20 blur-[100px] pointer-events-none"></div>
-      <div className="absolute top-[20%] right-[15%] w-[300px] h-[300px] rounded-full bg-cyan-400/20 blur-[90px] pointer-events-none"></div>
+      <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/30 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-orange-400/20 blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-[20%] right-[15%] w-[300px] h-[300px] rounded-full bg-sky-400/20 blur-[90px] pointer-events-none"></div>
 
       <div className="relative z-10 w-full max-w-[420px] px-6">
 
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-700 shadow-xl mb-6 transform hover:scale-105 transition-transform duration-300">
-            <Landmark size={32} className="text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-700 shadow-xl mb-6 transform hover:scale-105 transition-transform duration-300">
+            <PieChart size={32} className="text-white" />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 to-teal-800 mb-2">
+          <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-900 mb-2">
             VIVA DTSEN
           </h1>
           <p className="text-slate-500 font-medium tracking-wide">
@@ -84,13 +84,13 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-slate-700 ml-1">Email</label>
               <div className="relative group">
-                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@email.com"
-                  className="w-full pl-11 pr-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200"
+                  className="w-full pl-11 pr-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
                   required
                   autoComplete="username"
                 />
@@ -101,20 +101,20 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label className="block text-sm font-semibold text-slate-700 ml-1">Password</label>
               <div className="relative group">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-12 py-3 bg-white/50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200"
+                  className="w-full pl-11 pr-12 py-3 bg-white/50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200"
                   required
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 transition-colors focus:outline-none"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors focus:outline-none"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -125,14 +125,14 @@ export default function LoginPage() {
             <div className="flex justify-between items-center pt-2">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <div className="relative flex items-center justify-center">
-                  <input type="checkbox" className="peer w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-emerald-600 checked:border-emerald-600 transition-all cursor-pointer" />
+                  <input type="checkbox" className="peer w-5 h-5 appearance-none border-2 border-slate-300 rounded-md checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer" />
                   <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M1 5L5 9L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">Ingat saya</span>
               </label>
-              <Link to="/forgot-password" className="text-sm font-bold text-emerald-600 hover:text-emerald-800 transition-colors">
+              <Link to="/forgot-password" className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
                 Lupa sandi?
               </Link>
             </div>
@@ -141,7 +141,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 hover:shadow-xl hover:shadow-emerald-600/30 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              className="w-full mt-4 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
             >
               {loading && <Loader size={20} className="animate-spin" />}
               <span>{loading ? 'Memverifikasi...' : 'Masuk Sekarang'}</span>

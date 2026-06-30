@@ -46,7 +46,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
     : masterFilterColumns;
 
   return (
-    <aside className={`bg-white/80 backdrop-blur-xl border-r border-white/40 flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.02)] transition-all duration-300 z-10 ${isOpen ? 'w-80 h-auto overflow-auto ' : 'w-0 overflow-hidden opacity-0'}`}>
+    <aside className={`absolute lg:relative inset-y-0 left-0 bg-white/95 lg:bg-white/80 backdrop-blur-xl border-r border-slate-200/60 lg:border-white/40 flex flex-col shadow-[4px_0_24px_rgb(0,0,0,0.08)] lg:shadow-[4px_0_24px_rgb(0,0,0,0.02)] transition-all duration-300 z-50 lg:z-10 ${isOpen ? 'w-[85vw] max-w-[320px] lg:w-80 h-full overflow-auto' : 'w-0 overflow-hidden opacity-0'}`}>
       <div className="p-6">
         <div className="flex flex-col gap-4 pb-5 sticky top-0 bg-white/80 backdrop-blur-md z-20 border-b border-slate-100/50 mb-4">
           <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
       </div>
 
       <div className="p-6 mt-auto border-t border-slate-100 bg-white/50 backdrop-blur-sm shadow-[0_-4px_24px_rgb(0,0,0,0.02)]">
-        <button onClick={() => fetchData(1)} className="relative w-full overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3.5 rounded-xl hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all group flex items-center justify-center gap-2">
+        <button onClick={() => fetchData(1)} className="relative w-full overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3.5 rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all group flex items-center justify-center gap-2">
           {loading ? (
             <div className="flex items-center gap-2">
               <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

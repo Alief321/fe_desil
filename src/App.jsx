@@ -201,6 +201,13 @@ function Dashboard() {
       <Header view={view} setView={setView} sidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onLogout={logout} />
 
       <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile Backdrop */}
+        {sidebarOpen && (
+          <div 
+            className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         <Sidebar
           activeFilters={activeFilters}
           tableSection={tableSection}
@@ -219,7 +226,11 @@ function Dashboard() {
           {view === 'table' ? (
             <TableView
               section={tableSection}
-              setSection={setTableSection}
+              setSection={(newSection) => {
+                setTableSection(newSection);
+                setActiveFilters([]);
+                setPage(1);
+              }}
               data={data}
               page={page}
               total={total}
