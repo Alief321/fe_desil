@@ -1,6 +1,7 @@
 import { ChevronDown, Filter, Plus, X } from 'lucide-react';
 import Select from 'react-select';
-import { masterFilterColumns, getFilterLabel, getFilterLabelKeluarga } from '../config/filter';
+// Tambahkan import keluargaColumnsAliases di sini
+import { masterFilterColumns, getFilterLabel, getFilterLabelKeluarga, keluargaColumnsAliases } from '../config/filter';
 import { useState } from 'react';
 
 const extractPrefix = (value) => {
@@ -36,6 +37,9 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
 
   const [openIndex, setOpenIndex] = useState(null);
 
+  // LOGIKA BARU: Tentukan sumber list kolom berdasarkan tableSection
+  const activeColumns = tableSection === 'keluarga' ? Object.keys(keluargaColumnsAliases) : masterFilterColumns;
+
   return (
     <aside className={`bg-white border-r flex flex-col shadow-inner transition-all duration-300 ${isOpen ? 'w-80 h-auto overflow-auto ' : 'w-0 overflow-hidden'}`}>
       <div className="p-5">
@@ -54,12 +58,11 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
             const optionValues = f.column === 'desa_kelurahan' ? getDesaOptions() : columnOptions[f.column] || [];
             const selectedValues = Array.isArray(f.value) ? f.value : f.value ? [f.value] : [];
 
-            // Logika min-max disatukan untuk semua RANGE_COLUMNS
+            // Logika min-max
             const rangeOptions = isRangeColumn ? (columnOptions[f.column] || []).map(Number).filter((v) => !Number.isNaN(v)) : [];
             const rangeMin = rangeOptions.length ? Math.min(...rangeOptions) : 0;
             const rangeMax = rangeOptions.length ? Math.max(...rangeOptions) : 100;
 
-            // Membaca array [min, max] dari filter value
             const currentMin = Array.isArray(f.value) && f.value[0] != null ? Number(f.value[0]) : rangeMin;
             const currentMax = Array.isArray(f.value) && f.value[1] != null ? Number(f.value[1]) : rangeMax;
 
@@ -70,7 +73,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
               <div key={idx} className="bg-slate-50 border rounded-xl overflow-hidden animate-in slide-in-from-left-2">
                 {/* HEADER ACCORDION */}
                 <div onClick={() => setOpenIndex(openIndex === idx ? null : idx)} className="p-3 flex items-center justify-between cursor-pointer hover:bg-slate-100">
-                  <div className="text-xs font-bold text-slate-700">{f.column ? (tableSection === 'individu' ? getFilterLabel(f.column) : tableSection === 'keluarga' ? getFilterLabelKeluarga(f.column) : f.column) : 'Pilih Kategori'}</div>
+                  <div className="text-xs font-bold text-slate-700">{f.column ? (tableSection === 'individu' ? getFilterLabel(f.column) : getFilterLabelKeluarga(f.column)) : 'Pilih Kategori'}</div>
 
                   <div className="flex items-center gap-2">
                     <button
@@ -94,7 +97,8 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                   <div className="p-3 border-t">
                     <Select
                       className="w-full text-xs font-bold mb-2"
-                      options={masterFilterColumns.map((c) => ({
+                      // PERBAIKAN: Gunakan activeColumns yang sudah disesuaikan
+                      options={activeColumns.map((c) => ({
                         value: c,
                         label: tableSection === 'individu' ? getFilterLabel(c) : tableSection === 'keluarga' ? getFilterLabelKeluarga(c) : RANGE_COLUMNS.includes(c) ? c : c === 'desa_kelurahan' ? 'Desa/Kelurahan' : c,
                         isDisabled: c === 'desa_kelurahan' && !hasKecamatan,
@@ -140,7 +144,7 @@ const Sidebar = ({ activeFilters, columnOptions, tableSection, addFilter, remove
                           </div>
                         ) : f.column === 'desa_kelurahan' && !hasKecamatan ? (
                           <div className="rounded-xl border border-dashed p-4 text-sm text-slate-600">Pilih kecamatan terlebih dahulu agar desa/kelurahan dapat dipilih.</div>
-                        ) : f.column === 'Status Eligible' ? (
+                        ) : f.column === 'Status Eligible' || f.column === 'status_eligible' ? (
                           <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm cursor-pointer">
                               <input
